@@ -7,7 +7,7 @@ import type {
   VenueTableLayout,
   WeddingEvent,
 } from '../types'
-import type { LayoutWithTables, VenueRepo } from './types'
+import type { CheckinLogEntry, CheckinOp, LayoutWithTables, VenueRepo } from './types'
 
 export class SupabaseVenueRepo implements VenueRepo {
   private client: SupabaseClient
@@ -165,5 +165,53 @@ export class SupabaseVenueRepo implements VenueRepo {
       .delete()
       .eq('id', id)
     if (error) throw error
+  }
+
+  async syncCheckins(ops: CheckinOp[]): Promise<void> {
+    for (const op of ops) {
+      if (op.op === 'undo') {
+        const { error } = await this.client
+          .from('guests')
+          .update({ checked_in_at: null })
+          .eq('id', op.guest_id)
+        if (error) throw error
+        continue
+      }
+      // append-only log — id derived from the natural key makes upsert idempotent
+      const { error: logErr } = await this.client.from('checkin_log').upsert(
+        {
+          id: `${op.guest_id}:${op.device_id}:${op.checked_in_at}`,
+          event_id: op.event_id,
+          guest_id: op.guest_id,
+          checked_in_at: op.checked_in_at,
+          device_id: op.device_id,
+        },
+        { onConflict: 'id', ignoreDuplicates: true },
+      )
+      if (logErr) throw logErr
+      // guest keeps EARLIEST check-in
+      const { data: g, error: getErr } = await this.client
+        .from('guests')
+        .select('checked_in_at')
+        .eq('id', op.guest_id)
+        .maybeSingle()
+      if (getErr) throw getErr
+      if (!g?.checked_in_at || g.checked_in_at > op.checked_in_at) {
+        const { error } = await this.client
+          .from('guests')
+          .update({ checked_in_at: op.checked_in_at })
+          .eq('id', op.guest_id)
+        if (error) throw error
+      }
+    }
+  }
+
+  async listCheckinLog(eventId: string): Promise<CheckinLogEntry[]> {
+    const { data, error } = await this.client
+      .from('checkin_log')
+      .select('*')
+      .eq('event_id', eventId)
+    if (error) throw error
+    return (data ?? []) as CheckinLogEntry[]
   }
 }

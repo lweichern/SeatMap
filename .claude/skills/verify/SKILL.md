@@ -21,6 +21,7 @@ No Supabase env vars → app runs on the localStorage repo (`seatmap.v1` key). E
 Canvas coordinate math: the Konva stage starts at view offset (40,40), zoom 1, default 20 px/m until scale is set. Page coords = canvas bbox + 40 + world px.
 
 **Gotchas that burned a session:**
+- NEVER run `npm run build` while the dev server is up — it wipes `.next` out from under it and every subsequent request 500s. Build first, then start dev (`rm -rf .next` if it happened).
 - Re-measure the canvas bounding box after any toolbar content changes (the "Scale not set" badge disappearing changes toolbar height and shifts the canvas).
 - Autosave debounce is 800ms — wait ≥1200ms after the last edit, then wait for the `Saved ✓` text before reading localStorage or reloading.
 - Konva fires `dblclick` for any two clicks within 400ms even at distant points — keep ≥450ms between scripted canvas clicks unless deliberately testing double-click behavior.

@@ -6,7 +6,7 @@ import type {
   VenueTableLayout,
   WeddingEvent,
 } from '../types'
-import type { LayoutWithTables, VenueRepo } from './types'
+import type { CheckinLogEntry, CheckinOp, LayoutWithTables, VenueRepo } from './types'
 
 const KEY = 'seatmap.v1'
 
@@ -17,6 +17,7 @@ interface Db {
   events: WeddingEvent[]
   guests: Guest[]
   constraints: GuestConstraint[]
+  checkin_log: CheckinLogEntry[]
 }
 
 const EMPTY: Db = {
@@ -26,6 +27,7 @@ const EMPTY: Db = {
   events: [],
   guests: [],
   constraints: [],
+  checkin_log: [],
 }
 
 /**
@@ -173,5 +175,45 @@ export class LocalVenueRepo implements VenueRepo {
     const db = this.read()
     db.constraints = db.constraints.filter((c) => c.id !== id)
     this.write(db)
+  }
+
+  async syncCheckins(ops: CheckinOp[]): Promise<void> {
+    const db = this.read()
+    for (const op of ops) {
+      const guest = db.guests.find((g) => g.id === op.guest_id)
+      if (op.op === 'undo') {
+        if (guest) guest.checked_in_at = null
+        continue
+      }
+      // guest row keeps the EARLIEST check-in (flaky connections resubmit)
+      if (guest) {
+        guest.checked_in_at =
+          guest.checked_in_at && guest.checked_in_at <= op.checked_in_at
+            ? guest.checked_in_at
+            : op.checked_in_at
+      }
+      // append-only log, deduped on the natural key
+      const dupe = db.checkin_log.some(
+        (l) =>
+          l.guest_id === op.guest_id &&
+          l.device_id === op.device_id &&
+          l.checked_in_at === op.checked_in_at,
+      )
+      if (!dupe) {
+        db.checkin_log.push({
+          id: `${op.guest_id}:${op.device_id}:${op.checked_in_at}`,
+          event_id: op.event_id,
+          guest_id: op.guest_id,
+          checked_in_at: op.checked_in_at,
+          device_id: op.device_id,
+          synced_at: new Date().toISOString(),
+        })
+      }
+    }
+    this.write(db)
+  }
+
+  async listCheckinLog(eventId: string): Promise<CheckinLogEntry[]> {
+    return this.read().checkin_log.filter((l) => l.event_id === eventId)
   }
 }

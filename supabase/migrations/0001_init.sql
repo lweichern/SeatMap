@@ -125,8 +125,9 @@ create table photos (
 create index photos_event_status_idx on photos (event_id, status);
 
 -- Append-only, written by the greeter app on sync. Never mutated.
+-- id is the natural key "guest:device:timestamp" so resubmission is idempotent.
 create table checkin_log (
-  id uuid primary key default gen_random_uuid(),
+  id text primary key,
   event_id uuid not null references events (id) on delete cascade,
   guest_id uuid not null references guests (id) on delete cascade,
   checked_in_at timestamptz not null,

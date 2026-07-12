@@ -16,7 +16,11 @@ Verified via Playwright: event creation on a venue layout, messy-header CSV impo
 
 Verified via Playwright: HMAC-signed stateless guest tokens (cross-checked against an independent implementation, stable across re-exports), A4 PDF QR sheet with cut lines (names rendered via canvas so Chinese names print correctly), and per-guest PNG ZIP with sanitised filenames.
 
-Remaining phases (per CLAUDE.md build order): 4 offline greeter PWA · 5 guest 3D map · 6 photos.
+**Phase 4 — Offline greeter PWA: ✅ built and verified end-to-end** (2026-07-13).
+
+The CLAUDE.md acceptance test passed literally: event cached to IndexedDB ("✅ Ready for offline — N guests cached"), airplane mode on, 50 guests checked in via locally-HMAC-verified tokens, duplicate scan warns, forged token rejected, walk-in added, check-in undone, app reloaded while offline (service worker shell), wifi restored → all 52 outbox ops auto-synced idempotently into the planner DB with an append-only check-in log.
+
+Remaining phases (per CLAUDE.md build order): 5 guest 3D map · 6 photos.
 
 ## Stack
 

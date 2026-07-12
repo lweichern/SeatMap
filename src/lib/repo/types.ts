@@ -11,6 +11,23 @@ export interface LayoutWithTables extends VenueTableLayout {
   tables: VenueTable[]
 }
 
+export interface CheckinOp {
+  op: 'checkin' | 'undo'
+  event_id: string
+  guest_id: string
+  checked_in_at: string
+  device_id: string
+}
+
+export interface CheckinLogEntry {
+  id: string
+  event_id: string
+  guest_id: string
+  checked_in_at: string
+  device_id: string
+  synced_at: string
+}
+
 export interface VenueRepo {
   listEvents(): Promise<WeddingEvent[]>
   getEvent(id: string): Promise<WeddingEvent | null>
@@ -23,6 +40,9 @@ export interface VenueRepo {
   listConstraints(eventId: string): Promise<GuestConstraint[]>
   saveConstraint(c: GuestConstraint): Promise<void>
   deleteConstraint(id: string): Promise<void>
+  /** Idempotent: dedupes on (guest_id, device_id, checked_in_at); guest keeps EARLIEST check-in. */
+  syncCheckins(ops: CheckinOp[]): Promise<void>
+  listCheckinLog(eventId: string): Promise<CheckinLogEntry[]>
   listVenues(): Promise<Venue[]>
   getVenue(id: string): Promise<Venue | null>
   saveVenue(venue: Venue): Promise<void>
