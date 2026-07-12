@@ -58,6 +58,49 @@ export interface Venue {
   stage: Stage | null
 }
 
+export type PhotoMode = 'live_feed' | 'moderated_only' | 'off'
+
+export interface WeddingEvent {
+  id: string
+  org_id: string
+  venue_id: string
+  layout_id: string
+  couple_names: string
+  event_date: string // ISO date
+  starts_at: string | null
+  photo_mode: PhotoMode
+  guest_token_secret: string
+}
+
+export type GuestSide = 'bride' | 'groom' | 'both'
+
+export interface Guest {
+  id: string
+  event_id: string
+  name: string
+  phone: string | null
+  email: string | null
+  party_size: number
+  side: GuestSide
+  group_tag: string | null
+  is_vip: boolean
+  table_id: string | null
+  qr_token: string | null
+  checked_in_at: string | null
+  /** Pinned by the planner — excluded from re-allocation. Client-side only. */
+  locked: boolean
+}
+
+export type ConstraintType = 'must_sit_together' | 'must_not_sit_together'
+
+export interface GuestConstraint {
+  id: string
+  event_id: string
+  guest_a_id: string
+  guest_b_id: string
+  type: ConstraintType
+}
+
 export const TABLE_DEFAULTS = {
   seats: 10,
   shape: 'round' as TableShape,

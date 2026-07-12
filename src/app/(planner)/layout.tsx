@@ -11,6 +11,9 @@ export default function PlannerLayout({ children }: { children: React.ReactNode 
           <Link href="/venues" className="hover:text-slate-900">
             Venues
           </Link>
+          <Link href="/events" className="hover:text-slate-900">
+            Events
+          </Link>
         </nav>
       </header>
       <main className="min-h-0 flex-1">{children}</main>

@@ -1,5 +1,12 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import type { Venue, VenueTable, VenueTableLayout } from '../types'
+import type {
+  Guest,
+  GuestConstraint,
+  Venue,
+  VenueTable,
+  VenueTableLayout,
+  WeddingEvent,
+} from '../types'
 import type { LayoutWithTables, VenueRepo } from './types'
 
 export class SupabaseVenueRepo implements VenueRepo {
@@ -81,6 +88,82 @@ export class SupabaseVenueRepo implements VenueRepo {
       .from('venue_table_layouts')
       .delete()
       .eq('id', layoutId)
+    if (error) throw error
+  }
+
+  async listEvents(): Promise<WeddingEvent[]> {
+    const { data, error } = await this.client
+      .from('events')
+      .select('*')
+      .order('event_date')
+    if (error) throw error
+    return (data ?? []) as WeddingEvent[]
+  }
+
+  async getEvent(id: string): Promise<WeddingEvent | null> {
+    const { data, error } = await this.client
+      .from('events')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle()
+    if (error) throw error
+    return (data as WeddingEvent) ?? null
+  }
+
+  async saveEvent(event: WeddingEvent): Promise<void> {
+    const { error } = await this.client.from('events').upsert(event)
+    if (error) throw error
+  }
+
+  async deleteEvent(id: string): Promise<void> {
+    const { error } = await this.client.from('events').delete().eq('id', id)
+    if (error) throw error
+  }
+
+  async listGuests(eventId: string): Promise<Guest[]> {
+    const { data, error } = await this.client
+      .from('guests')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('name')
+    if (error) throw error
+    return (data ?? []) as Guest[]
+  }
+
+  async saveGuest(guest: Guest): Promise<void> {
+    await this.saveGuests([guest])
+  }
+
+  async saveGuests(guests: Guest[]): Promise<void> {
+    if (guests.length === 0) return
+    const { error } = await this.client.from('guests').upsert(guests)
+    if (error) throw error
+  }
+
+  async deleteGuest(id: string): Promise<void> {
+    const { error } = await this.client.from('guests').delete().eq('id', id)
+    if (error) throw error
+  }
+
+  async listConstraints(eventId: string): Promise<GuestConstraint[]> {
+    const { data, error } = await this.client
+      .from('guest_constraints')
+      .select('*')
+      .eq('event_id', eventId)
+    if (error) throw error
+    return (data ?? []) as GuestConstraint[]
+  }
+
+  async saveConstraint(c: GuestConstraint): Promise<void> {
+    const { error } = await this.client.from('guest_constraints').upsert(c)
+    if (error) throw error
+  }
+
+  async deleteConstraint(id: string): Promise<void> {
+    const { error } = await this.client
+      .from('guest_constraints')
+      .delete()
+      .eq('id', id)
     if (error) throw error
   }
 }
