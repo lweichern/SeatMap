@@ -20,7 +20,11 @@ Verified via Playwright: HMAC-signed stateless guest tokens (cross-checked again
 
 The CLAUDE.md acceptance test passed literally: event cached to IndexedDB ("✅ Ready for offline — N guests cached"), airplane mode on, 50 guests checked in via locally-HMAC-verified tokens, duplicate scan warns, forged token rejected, walk-in added, check-in undone, app reloaded while offline (service worker shell), wifi restored → all 52 outbox ops auto-synced idempotently into the planner DB with an append-only check-in log.
 
-Remaining phases (per CLAUDE.md build order): 5 guest 3D map · 6 photos.
+**Phase 5 — Guest view (table + 3D map): ✅ built and verified end-to-end** (2026-07-13).
+
+Verified via Playwright on a phone viewport: `/g/{token}` resolves and HMAC-verifies statelessly, TABLE number enormous with plain-language directions ("Right in the middle of the hall, near the stage"), procedural 3D hall (React Three Fiber — glowing pulsing gold table, camera fly-in, animated dashed path from the entrance, DOM billboard labels so no font fetch can blank the scene), 2D SVG fallback (`?2d=1` or no WebGL) with the same highlight, and friendly errors for invalid/orphaned tokens. Never a blank screen.
+
+Remaining phases (per CLAUDE.md build order): 6 photos.
 
 ## Stack
 

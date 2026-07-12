@@ -2,7 +2,7 @@
 
 import { useMemo, useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { Line, OrbitControls, Text } from '@react-three/drei'
+import { Html, Line, OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
 import type { Entrance, Stage, VenueTable, Wall } from '@/lib/types'
 
@@ -30,6 +30,8 @@ export default function Hall3D(props: Hall3DProps) {
     <Canvas
       dpr={[1, 2]}
       camera={{ position: [0, Math.max(w, h) * 1.1, h * 0.9], fov: 45 }}
+      // preserveDrawingBuffer: guests screenshot their table to share it
+      gl={{ preserveDrawingBuffer: true }}
       style={{ touchAction: 'none' }}
     >
       <color attach="background" args={['#0f172a']} />
@@ -70,9 +72,11 @@ export default function Hall3D(props: Hall3DProps) {
             <boxGeometry args={[props.stage.w, 0.6, props.stage.h]} />
             <meshStandardMaterial color="#7c3aed" />
           </mesh>
-          <Text position={[0, 0.5, 0]} rotation={[-Math.PI / 2, 0, 0]} fontSize={Math.min(props.stage.w / 5, 1.2)} color="#ddd6fe" anchorX="center" anchorY="middle">
-            STAGE
-          </Text>
+          <Html position={[0, 0.6, 0]} center zIndexRange={[10, 0]}>
+            <span className="pointer-events-none select-none text-xs font-bold tracking-widest text-purple-200">
+              STAGE
+            </span>
+          </Html>
         </group>
       )}
 
@@ -83,9 +87,11 @@ export default function Hall3D(props: Hall3DProps) {
             <circleGeometry args={[0.6, 32]} />
             <meshBasicMaterial color="#10b981" />
           </mesh>
-          <Text position={[0, 0.05, 1.2]} rotation={[-Math.PI / 2, 0, 0]} fontSize={0.7} color="#6ee7b7" anchorX="center">
-            ENTRANCE
-          </Text>
+          <Html position={[0, 0.3, 1.2]} center zIndexRange={[10, 0]}>
+            <span className="pointer-events-none select-none text-[10px] font-bold tracking-widest text-emerald-300">
+              ENTRANCE
+            </span>
+          </Html>
         </group>
       )}
 
@@ -176,17 +182,17 @@ function TableMesh({
           />
         </mesh>
       )}
-      <Text
-        position={[0, isGuest ? 1.7 : 1.15, 0]}
-        fontSize={isGuest ? 1.0 : 0.55}
-        color={isGuest ? '#fbbf24' : '#cbd5e1'}
-        anchorX="center"
-        anchorY="middle"
-        outlineWidth={isGuest ? 0.04 : 0}
-        outlineColor="#78350f"
-      >
-        {table.label}
-      </Text>
+      <Html position={[0, isGuest ? 1.8 : 1.2, 0]} center zIndexRange={[20, 0]}>
+        <span
+          className={`pointer-events-none select-none font-black ${
+            isGuest
+              ? 'rounded-full bg-amber-400 px-2.5 py-0.5 text-lg text-amber-950 shadow-lg'
+              : 'text-sm text-slate-300'
+          }`}
+        >
+          {table.label}
+        </span>
+      </Html>
       {isGuest && (
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
           <ringGeometry args={[r + 0.3, r + 0.55, 48]} />
