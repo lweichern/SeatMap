@@ -101,6 +101,22 @@ export interface GuestConstraint {
   type: ConstraintType
 }
 
+export type PhotoStatus = 'pending_ai' | 'pending_human' | 'approved' | 'rejected'
+
+export interface Photo {
+  id: string
+  event_id: string
+  guest_id: string | null
+  /** Data URL in local mode; storage path in Supabase mode. */
+  storage_path: string
+  thumb_path: string | null
+  status: PhotoStatus
+  ai_flag_reason: string | null
+  uploaded_at: string
+  approved_at: string | null
+  on_screen: boolean
+}
+
 export const TABLE_DEFAULTS = {
   seats: 10,
   shape: 'round' as TableShape,

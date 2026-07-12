@@ -1,6 +1,8 @@
 import type {
   Guest,
   GuestConstraint,
+  Photo,
+  PhotoStatus,
   Venue,
   VenueTable,
   VenueTableLayout,
@@ -43,6 +45,9 @@ export interface VenueRepo {
   /** Idempotent: dedupes on (guest_id, device_id, checked_in_at); guest keeps EARLIEST check-in. */
   syncCheckins(ops: CheckinOp[]): Promise<void>
   listCheckinLog(eventId: string): Promise<CheckinLogEntry[]>
+  listPhotos(eventId: string, statuses?: PhotoStatus[]): Promise<Photo[]>
+  savePhoto(photo: Photo): Promise<void>
+  updatePhoto(id: string, patch: Partial<Photo>): Promise<void>
   listVenues(): Promise<Venue[]>
   getVenue(id: string): Promise<Venue | null>
   saveVenue(venue: Venue): Promise<void>

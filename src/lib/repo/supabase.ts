@@ -2,6 +2,8 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type {
   Guest,
   GuestConstraint,
+  Photo,
+  PhotoStatus,
   Venue,
   VenueTable,
   VenueTableLayout,
@@ -213,5 +215,27 @@ export class SupabaseVenueRepo implements VenueRepo {
       .eq('event_id', eventId)
     if (error) throw error
     return (data ?? []) as CheckinLogEntry[]
+  }
+
+  async listPhotos(eventId: string, statuses?: PhotoStatus[]): Promise<Photo[]> {
+    let q = this.client
+      .from('photos')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('uploaded_at', { ascending: false })
+    if (statuses) q = q.in('status', statuses)
+    const { data, error } = await q
+    if (error) throw error
+    return (data ?? []) as Photo[]
+  }
+
+  async savePhoto(photo: Photo): Promise<void> {
+    const { error } = await this.client.from('photos').upsert(photo)
+    if (error) throw error
+  }
+
+  async updatePhoto(id: string, patch: Partial<Photo>): Promise<void> {
+    const { error } = await this.client.from('photos').update(patch).eq('id', id)
+    if (error) throw error
   }
 }
