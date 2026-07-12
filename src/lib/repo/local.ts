@@ -1,4 +1,11 @@
-import type { Venue, VenueTable, VenueTableLayout } from '../types'
+import type {
+  Guest,
+  GuestConstraint,
+  Venue,
+  VenueTable,
+  VenueTableLayout,
+  WeddingEvent,
+} from '../types'
 import type { LayoutWithTables, VenueRepo } from './types'
 
 const KEY = 'seatmap.v1'
@@ -7,9 +14,19 @@ interface Db {
   venues: Venue[]
   layouts: VenueTableLayout[]
   tables: VenueTable[]
+  events: WeddingEvent[]
+  guests: Guest[]
+  constraints: GuestConstraint[]
 }
 
-const EMPTY: Db = { venues: [], layouts: [], tables: [] }
+const EMPTY: Db = {
+  venues: [],
+  layouts: [],
+  tables: [],
+  events: [],
+  guests: [],
+  constraints: [],
+}
 
 /**
  * localStorage-backed repo so the planner app runs with zero configuration.
@@ -22,7 +39,8 @@ export class LocalVenueRepo implements VenueRepo {
     const raw = this.storage.getItem(KEY)
     if (!raw) return structuredClone(EMPTY)
     try {
-      return JSON.parse(raw) as Db
+      // merge over EMPTY so dbs written before newer collections existed still work
+      return { ...structuredClone(EMPTY), ...(JSON.parse(raw) as Partial<Db>) }
     } catch {
       return structuredClone(EMPTY)
     }
@@ -85,6 +103,75 @@ export class LocalVenueRepo implements VenueRepo {
     const db = this.read()
     db.layouts = db.layouts.filter((l) => l.id !== layoutId)
     db.tables = db.tables.filter((t) => t.layout_id !== layoutId)
+    this.write(db)
+  }
+
+  async listEvents(): Promise<WeddingEvent[]> {
+    return this.read().events
+  }
+
+  async getEvent(id: string): Promise<WeddingEvent | null> {
+    return this.read().events.find((e) => e.id === id) ?? null
+  }
+
+  async saveEvent(event: WeddingEvent): Promise<void> {
+    const db = this.read()
+    const i = db.events.findIndex((e) => e.id === event.id)
+    if (i >= 0) db.events[i] = event
+    else db.events.push(event)
+    this.write(db)
+  }
+
+  async deleteEvent(id: string): Promise<void> {
+    const db = this.read()
+    db.events = db.events.filter((e) => e.id !== id)
+    db.guests = db.guests.filter((g) => g.event_id !== id)
+    db.constraints = db.constraints.filter((c) => c.event_id !== id)
+    this.write(db)
+  }
+
+  async listGuests(eventId: string): Promise<Guest[]> {
+    return this.read().guests.filter((g) => g.event_id === eventId)
+  }
+
+  async saveGuest(guest: Guest): Promise<void> {
+    await this.saveGuests([guest])
+  }
+
+  async saveGuests(guests: Guest[]): Promise<void> {
+    const db = this.read()
+    for (const guest of guests) {
+      const i = db.guests.findIndex((g) => g.id === guest.id)
+      if (i >= 0) db.guests[i] = guest
+      else db.guests.push(guest)
+    }
+    this.write(db)
+  }
+
+  async deleteGuest(id: string): Promise<void> {
+    const db = this.read()
+    db.guests = db.guests.filter((g) => g.id !== id)
+    db.constraints = db.constraints.filter(
+      (c) => c.guest_a_id !== id && c.guest_b_id !== id,
+    )
+    this.write(db)
+  }
+
+  async listConstraints(eventId: string): Promise<GuestConstraint[]> {
+    return this.read().constraints.filter((c) => c.event_id === eventId)
+  }
+
+  async saveConstraint(c: GuestConstraint): Promise<void> {
+    const db = this.read()
+    const i = db.constraints.findIndex((x) => x.id === c.id)
+    if (i >= 0) db.constraints[i] = c
+    else db.constraints.push(c)
+    this.write(db)
+  }
+
+  async deleteConstraint(id: string): Promise<void> {
+    const db = this.read()
+    db.constraints = db.constraints.filter((c) => c.id !== id)
     this.write(db)
   }
 }

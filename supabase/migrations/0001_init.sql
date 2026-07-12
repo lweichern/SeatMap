@@ -91,6 +91,7 @@ create table guests (
   group_tag text,
   is_vip boolean not null default false,
   table_id uuid references venue_tables (id),
+  locked boolean not null default false,
   qr_token text unique,
   checked_in_at timestamptz,
   checked_in_by uuid references users (id)
