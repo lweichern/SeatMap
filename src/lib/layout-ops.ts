@@ -1,3 +1,4 @@
+import { snapToGrid } from './geometry'
 import type { VenueTable } from './types'
 
 /** Smallest positive integer (as a string) not already used as a label. */
@@ -28,7 +29,8 @@ export function alignTables(
 ): VenueTable[] {
   const sel = tables.filter((t) => ids.includes(t.id))
   if (sel.length < 2) return tables
-  const mean = sel.reduce((s, t) => s + t[axis], 0) / sel.length
+  // snap the mean so aligned tables stay on the 0.5m grid
+  const mean = snapToGrid(sel.reduce((s, t) => s + t[axis], 0) / sel.length)
   return tables.map((t) =>
     ids.includes(t.id) ? { ...t, [axis]: mean } : t,
   )

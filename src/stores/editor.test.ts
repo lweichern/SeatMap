@@ -86,6 +86,15 @@ describe('editor store — venue geometry', () => {
     expect(useEditor.getState().draftWall).toEqual([])
   })
 
+  it('drops zero-length segments left by a double-click duplicate point', () => {
+    const s = useEditor.getState()
+    s.addWallPoint(0, 0)
+    s.addWallPoint(10, 0)
+    s.addWallPoint(10, 0) // double-click leaves a duplicate
+    s.finishWall()
+    expect(useEditor.getState().walls).toEqual([{ x1: 0, y1: 0, x2: 10, y2: 0 }])
+  })
+
   it('stores entrance and scale', () => {
     const s = useEditor.getState()
     s.setEntrance({ x: 5, y: 0, facing_deg: 180 })

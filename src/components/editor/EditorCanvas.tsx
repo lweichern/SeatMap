@@ -192,7 +192,18 @@ export default function EditorCanvas() {
   }, [dragLine, editor, marquee, pxPerM, toM, worldPos])
 
   const onDblClick = useCallback(() => {
-    if (editor.tool === 'wall') editor.finishWall()
+    if (editor.tool !== 'wall') return
+    // Konva fires dblclick for ANY two clicks within 400ms, even far apart —
+    // rapid point placement must not self-finish. Only finish when the two
+    // clicks landed on the same snapped point (a true double-click in place).
+    const pts = editor.draftWall
+    if (
+      pts.length >= 2 &&
+      pts[pts.length - 1].x === pts[pts.length - 2].x &&
+      pts[pts.length - 1].y === pts[pts.length - 2].y
+    ) {
+      editor.finishWall()
+    }
   }, [editor])
 
   function confirmScale() {

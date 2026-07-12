@@ -182,6 +182,8 @@ export const useEditor = create<EditorState>((set, get) => ({
       if (pts.length < 2) return { draftWall: [] }
       const walls: Wall[] = [...s.walls]
       for (let i = 0; i < pts.length - 1; i++) {
+        // skip zero-length segments (e.g. the duplicate point a double-click leaves)
+        if (pts[i].x === pts[i + 1].x && pts[i].y === pts[i + 1].y) continue
         walls.push({ x1: pts[i].x, y1: pts[i].y, x2: pts[i + 1].x, y2: pts[i + 1].y })
       }
       return { walls, draftWall: [], dirty: true }
@@ -197,3 +199,8 @@ export const useEditor = create<EditorState>((set, get) => ({
 
   setScale: (scalePxPerM) => set({ scalePxPerM, dirty: true }),
 }))
+
+// Debug handle for development tooling / e2e tests
+if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+  ;(window as unknown as Record<string, unknown>).__editor = useEditor
+}

@@ -42,6 +42,21 @@ describe('alignTables', () => {
     expect(out.find((t) => t.id === 'c')!.y).toBe(100)
   })
 
+  it('snaps the alignment target to the 0.5m grid', () => {
+    const a = table({ id: 'a', y: 10 })
+    const b = table({ id: 'b', y: 10 })
+    const c = table({ id: 'c', y: 11.5 })
+    const out = alignTables([a, b, c], ['a', 'b', 'c'], 'y')
+    // raw mean is 10.5; already on grid — now force an off-grid mean
+    const out2 = alignTables(
+      [table({ id: 'p', y: 10 }), table({ id: 'q', y: 10.5 }), table({ id: 'r', y: 10.5 })],
+      ['p', 'q', 'r'],
+      'y',
+    )
+    expect(out.every((t) => t.y === 10.5)).toBe(true)
+    expect(out2.every((t) => (t.y * 2) % 1 === 0)).toBe(true)
+  })
+
   it('aligns on x when asked', () => {
     const a = table({ id: 'a', x: 1 })
     const b = table({ id: 'b', x: 3 })

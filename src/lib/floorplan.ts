@@ -31,10 +31,10 @@ async function rasterizePdfFirstPage(file: File): Promise<string> {
     canvas.width = Math.ceil(viewport.width)
     canvas.height = Math.ceil(viewport.height)
     const ctx = canvas.getContext('2d')!
-    await page.render({ canvas, canvasContext: ctx, viewport }).promise
+    await page.render({ canvasContext: ctx, viewport }).promise
     return canvas.toDataURL('image/png')
   } finally {
-    await doc.cleanup?.()
+    await doc.destroy()
   }
 }
 

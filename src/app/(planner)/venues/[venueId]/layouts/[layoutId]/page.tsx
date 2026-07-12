@@ -68,6 +68,9 @@ export default function EditorPage({
     let timer: ReturnType<typeof setTimeout> | null = null
     const unsub = useEditor.subscribe((s) => {
       if (!s.dirty || !venueRef.current) return
+      // Pending edits must never display as "Saved" — the debounce window is
+      // exactly when closing the tab would lose work.
+      setSaveState('saving')
       if (timer) clearTimeout(timer)
       timer = setTimeout(async () => {
         const st = useEditor.getState()
@@ -80,7 +83,6 @@ export default function EditorPage({
           floorplan_url: st.floorplanUrl,
           scale_px_per_metre: st.scalePxPerM,
         }
-        setSaveState('saving')
         try {
           const repo = getRepo()
           await repo.saveVenue(updated)
@@ -107,6 +109,15 @@ export default function EditorPage({
       if (timer) clearTimeout(timer)
     }
   }, [venueId, layoutId])
+
+  // Unsaved edits (debounce window or failed save) → warn before leaving
+  useEffect(() => {
+    function onBeforeUnload(e: BeforeUnloadEvent) {
+      if (useEditor.getState().dirty) e.preventDefault()
+    }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => window.removeEventListener('beforeunload', onBeforeUnload)
+  }, [])
 
   const layoutName = useEditor((s) => s.layoutName)
 
