@@ -9,6 +9,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
     "@supabase/supabase-js": "^2.110.2",
     "@zxing/browser": "^0.2.1",
     "dexie": "^4.4.4",
@@ -21,6 +23,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-konva": "^19.2.5",
+    "three": "^0.185.1",
     "xlsx": "^0.18.5",
     "zustand": "^5.0.14"
   },
@@ -30,6 +33,7 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/three": "^0.185.1",
     "fake-indexeddb": "^6.2.5",
     "jsdom": "^29.1.1",
     "playwright": "1.56",

@@ -1,0 +1,158 @@
+'use client'
+
+import dynamic from 'next/dynamic'
+import { Component, use, useEffect, useState, type ReactNode } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { resolveGuest, type GuestView } from '@/lib/guest-view'
+import { describeTablePosition } from '@/lib/directions'
+import { Hall2D } from '@/components/guest/Hall2D'
+import type { Hall3DProps } from '@/components/guest/Hall3D'
+
+const Hall3D = dynamic(() => import('@/components/guest/Hall3D'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full items-center justify-center text-sm text-slate-500">
+      Loading map…
+    </div>
+  ),
+})
+
+/** If WebGL is broken in any way, the 2D map takes over. Never a blank screen. */
+class MapErrorBoundary extends Component<
+  { fallback: ReactNode; children: ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false }
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+  render() {
+    return this.state.failed ? this.props.fallback : this.props.children
+  }
+}
+
+function webglAvailable(): boolean {
+  try {
+    const c = document.createElement('canvas')
+    return !!(c.getContext('webgl2') || c.getContext('webgl'))
+  } catch {
+    return false
+  }
+}
+
+export default function GuestPage({
+  params,
+}: {
+  params: Promise<{ token: string }>
+}) {
+  const { token } = use(params)
+  const search = useSearchParams()
+  const [view, setView] = useState<GuestView | null | 'loading'>('loading')
+  const [use3d, setUse3d] = useState(false)
+  const [tab, setTab] = useState<'map' | 'photos'>('map')
+
+  useEffect(() => {
+    resolveGuest(token).then(setView)
+    setUse3d(webglAvailable() && search.get('2d') !== '1')
+  }, [token, search])
+
+  if (view === 'loading') {
+    return (
+      <Shell>
+        <p className="mt-24 text-center text-slate-400">Finding your seat…</p>
+      </Shell>
+    )
+  }
+
+  if (!view) {
+    return (
+      <Shell>
+        <div className="mt-20 px-6 text-center">
+          <p className="text-2xl font-bold text-slate-100">Hmm, that link isn&apos;t working</p>
+          <p className="mt-3 text-slate-400">
+            This QR code isn&apos;t valid. Please see the greeter at the entrance —
+            they&apos;ll find your table in seconds.
+          </p>
+        </div>
+      </Shell>
+    )
+  }
+
+  const { guest, event, venue, tables, table } = view
+  const hallProps: Hall3DProps = {
+    widthM: venue.width_m ?? 40,
+    heightM: venue.height_m ?? 25,
+    walls: venue.walls,
+    stage: venue.stage,
+    entrance: venue.entrance,
+    tables,
+    guestTableId: table?.id ?? null,
+  }
+
+  return (
+    <Shell>
+      <header className="px-6 pt-8 text-center">
+        <p className="text-sm uppercase tracking-widest text-slate-400">
+          {event.couple_names}
+        </p>
+        <p className="mt-1 text-lg text-slate-300">Welcome, {guest.name}</p>
+        {table ? (
+          <>
+            <p className="mt-4 text-[17vw] font-black leading-none tracking-tight text-amber-400 sm:text-8xl">
+              TABLE {table.label}
+            </p>
+            <p className="mt-3 text-slate-300">{describeTablePosition(table, venue)}</p>
+            {guest.party_size > 1 && (
+              <p className="mt-1 text-sm text-slate-500">
+                {guest.party_size} seats reserved for your party
+              </p>
+            )}
+          </>
+        ) : (
+          <p className="mt-6 text-2xl font-bold text-slate-100">
+            Please see the greeter for your table
+          </p>
+        )}
+      </header>
+
+      <div className="mx-auto mt-6 flex w-full max-w-md gap-2 px-6">
+        {(['map', 'photos'] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`flex-1 rounded-full py-2 text-sm font-semibold ${
+              tab === t ? 'bg-amber-500 text-slate-900' : 'bg-slate-800 text-slate-300'
+            }`}
+          >
+            {t === 'map' ? 'Find my table' : 'Photos'}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'map' && (
+        <div className="mx-auto mt-4 h-[62vh] w-full max-w-3xl overflow-hidden rounded-t-2xl px-2">
+          {use3d ? (
+            <MapErrorBoundary fallback={<Hall2D {...hallProps} />}>
+              <Hall3D {...hallProps} />
+            </MapErrorBoundary>
+          ) : (
+            <Hall2D {...hallProps} />
+          )}
+        </div>
+      )}
+
+      {tab === 'photos' && (
+        <div className="mt-10 px-6 text-center text-slate-400">
+          <p className="text-4xl">📸</p>
+          <p className="mt-2">
+            Photo sharing opens during dinner — check back soon!
+          </p>
+        </div>
+      )}
+    </Shell>
+  )
+}
+
+function Shell({ children }: { children: ReactNode }) {
+  return <div className="min-h-screen bg-slate-900 pb-6">{children}</div>
+}
