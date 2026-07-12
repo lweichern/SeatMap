@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { resolveGuest, type GuestView } from '@/lib/guest-view'
 import { describeTablePosition } from '@/lib/directions'
 import { Hall2D } from '@/components/guest/Hall2D'
+import { PhotoTab } from '@/components/guest/PhotoTab'
 import type { Hall3DProps } from '@/components/guest/Hall3D'
 
 const Hall3D = dynamic(() => import('@/components/guest/Hall3D'), {
@@ -142,12 +143,7 @@ export default function GuestPage({
       )}
 
       {tab === 'photos' && (
-        <div className="mt-10 px-6 text-center text-slate-400">
-          <p className="text-4xl">📸</p>
-          <p className="mt-2">
-            Photo sharing opens during dinner — check back soon!
-          </p>
-        </div>
+        <PhotoTab eventId={event.id} guestId={guest.id} photoMode={event.photo_mode} />
       )}
     </Shell>
   )

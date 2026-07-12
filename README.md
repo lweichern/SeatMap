@@ -24,7 +24,11 @@ The CLAUDE.md acceptance test passed literally: event cached to IndexedDB ("✅ 
 
 Verified via Playwright on a phone viewport: `/g/{token}` resolves and HMAC-verifies statelessly, TABLE number enormous with plain-language directions ("Right in the middle of the hall, near the stage"), procedural 3D hall (React Three Fiber — glowing pulsing gold table, camera fly-in, animated dashed path from the entrance, DOM billboard labels so no font fetch can blank the scene), 2D SVG fallback (`?2d=1` or no WebGL) with the same highlight, and friendly errors for invalid/orphaned tokens. Never a blank screen.
 
-Remaining phases (per CLAUDE.md build order): 6 photos.
+**Phase 6 — Photos: ✅ built and verified end-to-end** (2026-07-13).
+
+Verified via Playwright across three surfaces at once: guest upload with client-side resize (3000px PNG → 17KB WebP), tiered moderation (AI verdict via `/api/moderate` — Gemini 2.5 Flash when `GEMINI_API_KEY` is set, fail-open to the human queue otherwise), live feed shows AI-passed photos immediately, ballroom screen (`/screen/[eventId]`) shows **only** human-approved photos with Ken Burns + crossfade and a local cache against wifi blips, rejected photos vanish from the feed but stay in the couple's unfiltered ZIP album.
+
+**All six CLAUDE.md phases are complete.** v2 (AR-lite compass wayfinding) is the designated next step per the spec.
 
 ## Stack
 

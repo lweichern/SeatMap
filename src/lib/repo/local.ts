@@ -1,6 +1,8 @@
 import type {
   Guest,
   GuestConstraint,
+  Photo,
+  PhotoStatus,
   Venue,
   VenueTable,
   VenueTableLayout,
@@ -18,6 +20,7 @@ interface Db {
   guests: Guest[]
   constraints: GuestConstraint[]
   checkin_log: CheckinLogEntry[]
+  photos: Photo[]
 }
 
 const EMPTY: Db = {
@@ -28,6 +31,7 @@ const EMPTY: Db = {
   guests: [],
   constraints: [],
   checkin_log: [],
+  photos: [],
 }
 
 /**
@@ -215,5 +219,30 @@ export class LocalVenueRepo implements VenueRepo {
 
   async listCheckinLog(eventId: string): Promise<CheckinLogEntry[]> {
     return this.read().checkin_log.filter((l) => l.event_id === eventId)
+  }
+
+  async listPhotos(eventId: string, statuses?: PhotoStatus[]): Promise<Photo[]> {
+    return this.read()
+      .photos.filter(
+        (p) => p.event_id === eventId && (!statuses || statuses.includes(p.status)),
+      )
+      .sort((a, b) => b.uploaded_at.localeCompare(a.uploaded_at))
+  }
+
+  async savePhoto(photo: Photo): Promise<void> {
+    const db = this.read()
+    const i = db.photos.findIndex((p) => p.id === photo.id)
+    if (i >= 0) db.photos[i] = photo
+    else db.photos.push(photo)
+    this.write(db)
+  }
+
+  async updatePhoto(id: string, patch: Partial<Photo>): Promise<void> {
+    const db = this.read()
+    const i = db.photos.findIndex((p) => p.id === id)
+    if (i >= 0) {
+      db.photos[i] = { ...db.photos[i], ...patch }
+      this.write(db)
+    }
   }
 }
