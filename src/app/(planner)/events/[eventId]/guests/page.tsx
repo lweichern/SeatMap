@@ -6,6 +6,12 @@ import { getRepo } from '@/lib/repo'
 import { newTableId } from '@/lib/layout-ops'
 import { ImportDialog } from '@/components/guests/ImportDialog'
 import { ConstraintsPanel } from '@/components/guests/ConstraintsPanel'
+import {
+  downloadBlob,
+  ensureTokens,
+  exportPdfSheet,
+  exportPngZip,
+} from '@/lib/qr-export'
 import type { Guest, GuestConstraint, GuestSide, WeddingEvent } from '@/lib/types'
 
 type SideFilter = 'all' | GuestSide
@@ -25,6 +31,7 @@ export default function GuestsPage({
   const [vipOnly, setVipOnly] = useState(false)
   const [importing, setImporting] = useState(false)
   const [newGuest, setNewGuest] = useState(EMPTY_NEW)
+  const [exporting, setExporting] = useState<'' | 'pdf' | 'zip'>('')
 
   const refresh = useCallback(async () => {
     const repo = getRepo()
@@ -85,6 +92,32 @@ export default function GuestsPage({
     refresh()
   }
 
+  // QR export: sign tokens for any guest missing one, persist, then download.
+  async function exportQr(kind: 'pdf' | 'zip') {
+    if (!event || guests.length === 0) return
+    setExporting(kind)
+    try {
+      const withTokens = await ensureTokens(event, guests)
+      const fresh = withTokens.filter((g, i) => g !== guests[i])
+      if (fresh.length > 0) {
+        await getRepo().saveGuests(fresh)
+        setGuests(withTokens)
+      }
+      const origin = window.location.origin
+      const slug = event.couple_names.replace(/\s+/g, '-').toLowerCase()
+      if (kind === 'pdf') {
+        downloadBlob(
+          await exportPdfSheet(event, withTokens, origin),
+          `qr-sheet-${slug}.pdf`,
+        )
+      } else {
+        downloadBlob(await exportPngZip(withTokens, origin), `qr-codes-${slug}.zip`)
+      }
+    } finally {
+      setExporting('')
+    }
+  }
+
   const input = 'rounded border border-slate-300 px-2 py-1 text-xs w-full'
 
   return (
@@ -103,6 +136,22 @@ export default function GuestsPage({
             className="rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50"
           >
             Import CSV/Excel
+          </button>
+          <button
+            onClick={() => exportQr('pdf')}
+            disabled={exporting !== '' || guests.length === 0}
+            className="rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50 disabled:opacity-40"
+            title="A4 sheet of QR cards with cut lines"
+          >
+            {exporting === 'pdf' ? 'Generating…' : 'QR PDF sheet'}
+          </button>
+          <button
+            onClick={() => exportQr('zip')}
+            disabled={exporting !== '' || guests.length === 0}
+            className="rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50 disabled:opacity-40"
+            title="One PNG per guest, named after them"
+          >
+            {exporting === 'zip' ? 'Generating…' : 'QR PNG zip'}
           </button>
           <Link
             href={`/events/${eventId}/allocate`}

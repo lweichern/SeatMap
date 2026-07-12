@@ -12,7 +12,11 @@ Verified via Playwright against the running app: floor plan upload (PNG/JPG/PDF 
 
 Verified via Playwright: event creation on a venue layout, messy-header CSV import (fuzzy detection + manual mapping + preview), inline guest editing with search/filters, seating rules UI, worker-based allocator (must-sit/must-not honored, VIPs nearest stage, group clustering, capacity respected, party sizes counted), drag-to-override, and locked guests surviving re-allocation.
 
-Remaining phases (per CLAUDE.md build order): 3 QR generation + invite export · 4 offline greeter PWA · 5 guest 3D map · 6 photos.
+**Phase 3 — QR generation + invite export: ✅ built and verified end-to-end** (2026-07-13).
+
+Verified via Playwright: HMAC-signed stateless guest tokens (cross-checked against an independent implementation, stable across re-exports), A4 PDF QR sheet with cut lines (names rendered via canvas so Chinese names print correctly), and per-guest PNG ZIP with sanitised filenames.
+
+Remaining phases (per CLAUDE.md build order): 4 offline greeter PWA · 5 guest 3D map · 6 photos.
 
 ## Stack
 
