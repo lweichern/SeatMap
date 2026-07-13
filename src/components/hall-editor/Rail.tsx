@@ -16,11 +16,12 @@ export function Rail({ unreachable }: Props) {
   const fileRef = useRef<HTMLInputElement>(null)
   const gated = s.scalePxPerM === null
 
-  const toolBtn = (tool: Tool, label: string, disabled = gated) => (
+  const toolBtn = (tool: Tool, label: string, disabled = gated, title?: string) => (
     <button
       // clicking the active tool again backs out to Select (so does Esc)
       onClick={() => s.setTool(s.tool === tool ? 'select' : tool)}
       disabled={disabled}
+      title={disabled ? title : undefined}
       className={`rounded-md px-2 py-1.5 text-xs font-medium ${
         s.tool === tool
           ? 'bg-slate-900 text-white'
@@ -121,10 +122,20 @@ export function Rail({ unreachable }: Props) {
         s.door !== null,
         <div className="space-y-2">
           <div className="flex flex-wrap gap-1">
-            {toolBtn('door', '🚪 Door', gated || s.walls.length === 0)}
+            {toolBtn(
+              'door',
+              '🚪 Door',
+              gated || s.walls.length === 0,
+              'Draw walls first — the door is a gap in a wall',
+            )}
             {toolBtn('registration', '🛎 Registration')}
             {toolBtn('stage', '🎤 Stage')}
           </div>
+          {!gated && s.walls.length === 0 && (
+            <p className="text-[10px] leading-snug text-amber-600">
+              The door needs a wall to sit in — draw the room in step 2 first.
+            </p>
+          )}
           <label className="block text-xs text-slate-600">
             Door width (m)
             <input
