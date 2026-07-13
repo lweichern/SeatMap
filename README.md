@@ -28,7 +28,11 @@ Verified via Playwright on a phone viewport: `/g/{token}` resolves and HMAC-veri
 
 Verified via Playwright across three surfaces at once: guest upload with client-side resize (3000px PNG → 17KB WebP), tiered moderation (AI verdict via `/api/moderate` — Gemini 2.5 Flash when `GEMINI_API_KEY` is set, fail-open to the human queue otherwise), live feed shows AI-passed photos immediately, ballroom screen (`/screen/[eventId]`) shows **only** human-approved photos with Ken Burns + crossfade and a local cache against wifi blips, rejected photos vanish from the feed but stay in the couple's unfiltered ZIP album.
 
-**All six CLAUDE.md phases are complete.** v2 (AR-lite compass wayfinding) is the designated next step per the spec.
+**All six CLAUDE.md phases are complete.**
+
+**Hall Editor v2 (HALL_EDITOR.md port): ✅ built and verified** (2026-07-13). Replaces the Phase 1 editor: shape system (round/banquet/square/oval + buffet *service* kind with DB-enforced NULL seats), scale-gated 4-step rail, rectangle-room + trace wall tools, door-as-a-gap (2D render, 3D mesh and pathfinding grid), registration desk in the foyer, grid tool (drag → R×C ghost → row/serpentine/column numbering), A* walking routes desk→door→table with a retry ladder (red "NO WALKABLE ROUTE" — never a silent straight line), desk-to-every-table validation pass, and a live 3D preview (canvas-sprite labels, chafing-dish buffets, route discs with a landing brightness wave, camera that never moves on edits). The guest view renders the SAME `lib/scene-builder` scene with the same route. All 8 acceptance criteria verified via Playwright; 100 unit tests.
+
+v2 AR-lite compass wayfinding remains the designated next step per CLAUDE.md.
 
 ## Stack
 
