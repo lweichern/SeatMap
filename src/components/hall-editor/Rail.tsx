@@ -181,28 +181,46 @@ export function Rail({ unreachable }: Props) {
                 <option value={45}>45°</option>
               </select>
             </label>
+          </div>
+          <div className="flex items-end gap-1.5">
             <label className="w-14 text-[10px] text-slate-500">
-              Aisle (m)
+              Rows
               <input
                 type="number"
-                step={0.25}
-                min={0.5}
-                max={6}
-                defaultValue={s.gridAisle}
+                min={1}
+                max={20}
+                value={s.gridRows}
                 onChange={(e) => {
-                  const v = parseFloat(e.target.value)
-                  if (Number.isFinite(v) && v >= 0.5 && v <= 6) s.setGridAisle(v)
+                  const v = parseInt(e.target.value, 10)
+                  if (Number.isFinite(v) && v >= 1 && v <= 20) s.setGridRows(v)
                 }}
                 className="mt-0.5 w-full rounded border border-slate-300 px-1 py-1 text-xs"
               />
             </label>
+            <span className="pb-1.5 text-xs text-slate-400">×</span>
+            <label className="w-14 text-[10px] text-slate-500">
+              Cols
+              <input
+                type="number"
+                min={1}
+                max={20}
+                value={s.gridCols}
+                onChange={(e) => {
+                  const v = parseInt(e.target.value, 10)
+                  if (Number.isFinite(v) && v >= 1 && v <= 20) s.setGridCols(v)
+                }}
+                className="mt-0.5 w-full rounded border border-slate-300 px-1 py-1 text-xs"
+              />
+            </label>
+            <span className="pb-1.5 text-[10px] text-slate-400">
+              = {s.gridRows * s.gridCols} tables
+            </span>
           </div>
-          {s.gridAisle < 1.75 && (
-            <p className="text-[10px] leading-snug text-amber-600">
-              Below ~1.75m the chair rings squeeze the walking aisles — expect
-              amber/red routes in the validation check.
-            </p>
-          )}
+          <p className="text-[10px] leading-snug text-slate-400">
+            Drag a rectangle — exactly {s.gridRows} × {s.gridCols} tables are
+            spread evenly across it. If routes turn amber/red afterwards, the
+            spacing is too tight for the aisles.
+          </p>
         </div>,
       )}
 

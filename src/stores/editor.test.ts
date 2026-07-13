@@ -105,23 +105,41 @@ describe('placing tables', () => {
 describe('grid tool', () => {
   beforeEach(setScale)
 
-  it('fills a dragged rect with auto-spaced, row-numbered tables', () => {
+  it('places EXACTLY rows × cols tables, evenly spread over the rect', () => {
     const s = useEditor.getState()
     s.setPlaceShape('round')
-    // round spacing = 1.8 + 2.0 aisle = 3.8 → 15.2/3.8 = 4 cols, 7.6/3.8 = 2 rows
-    s.applyGrid({ x: 2, y: 2, w: 15.2, h: 7.6 })
+    s.setGridRows(2)
+    s.setGridCols(4)
+    s.applyGrid({ x: 2, y: 2, w: 16, h: 8 })
     const tables = useEditor.getState().tables
     expect(tables.length).toBe(8)
     expect(tables.map((t) => t.label)).toEqual(['1', '2', '3', '4', '5', '6', '7', '8'])
     // row-major: first 4 share a y
-    expect(new Set(tables.slice(0, 4).map((t) => t.y)).size).toBe(1)
+    const row0 = tables.slice(0, 4)
+    expect(new Set(row0.map((t) => t.y)).size).toBe(1)
+    // even spacing: pitch = 16/4 = 4, half-pitch margin → x = 4, 8, 12, 16
+    expect(row0.map((t) => t.x)).toEqual([4, 8, 12, 16])
+    // rows: pitch 8/2 = 4 → y = 4, 8
+    expect(tables[0].y).toBe(4)
+    expect(tables[4].y).toBe(8)
+  })
+
+  it('the count is honoured regardless of how big the rectangle is', () => {
+    const s = useEditor.getState()
+    s.setPlaceShape('round')
+    s.setGridRows(5)
+    s.setGridCols(6)
+    s.applyGrid({ x: 0, y: 0, w: 9, h: 6 }) // tiny rect, still 30 tables
+    expect(useEditor.getState().tables.length).toBe(30)
   })
 
   it('serpentine numbering reverses odd rows', () => {
     const s = useEditor.getState()
     s.setPlaceShape('round')
     s.setGridOrder('serpentine')
-    s.applyGrid({ x: 2, y: 2, w: 15.2, h: 7.6 })
+    s.setGridRows(2)
+    s.setGridCols(4)
+    s.applyGrid({ x: 2, y: 2, w: 16, h: 8 })
     const tables = useEditor.getState().tables
     const row0 = tables.filter((t) => t.y === tables[0].y).sort((a, b) => a.x - b.x)
     const row1 = tables.filter((t) => t.y !== tables[0].y).sort((a, b) => a.x - b.x)
@@ -133,32 +151,21 @@ describe('grid tool', () => {
     const s = useEditor.getState()
     s.setPlaceShape('round')
     s.setGridOrder('cols')
-    s.applyGrid({ x: 2, y: 2, w: 15.2, h: 7.6 })
+    s.setGridRows(2)
+    s.setGridCols(4)
+    s.applyGrid({ x: 2, y: 2, w: 16, h: 8 })
     const tables = useEditor.getState().tables
     const col0 = tables.filter((t) => t.x === tables[0].x).sort((a, b) => a.y - b.y)
     expect(col0.map((t) => t.label)).toEqual(['1', '2'])
-  })
-
-  it('a tighter aisle packs more tables into the same rectangle', () => {
-    const s = useEditor.getState()
-    s.setPlaceShape('round')
-    // default aisle 2.0 → 3.8m pitch → 4 × 2 = 8 in a 15.2 × 7.6 rect
-    s.applyGrid({ x: 2, y: 2, w: 15.2, h: 7.6 })
-    expect(useEditor.getState().tables.length).toBe(8)
-    // aisle 1.0 → 2.8m pitch → 5 × 2 = 10 more tables in the SAME rect
-    useEditor.getState().reset()
-    setScale()
-    useEditor.getState().setPlaceShape('round')
-    useEditor.getState().setGridAisle(1.0)
-    useEditor.getState().applyGrid({ x: 2, y: 2, w: 15.2, h: 7.6 })
-    expect(useEditor.getState().tables.length).toBe(10)
   })
 
   it('grid numbering continues after existing tables', () => {
     const s = useEditor.getState()
     s.setPlaceShape('round')
     s.placeTable(30, 30)
-    s.applyGrid({ x: 2, y: 2, w: 7.6, h: 3.8 })
+    s.setGridRows(1)
+    s.setGridCols(2)
+    s.applyGrid({ x: 2, y: 2, w: 8, h: 4 })
     const labels = useEditor.getState().tables.map((t) => t.label)
     expect(labels).toEqual(['1', '2', '3'])
   })
