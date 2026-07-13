@@ -220,6 +220,7 @@ export function Canvas2D({ route, unreachableIds }: Props) {
           editor.placeShape,
           editor.gridRot,
           editor.gridOrder,
+          editor.gridAisle,
         )
       : null
 

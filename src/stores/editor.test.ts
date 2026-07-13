@@ -139,6 +139,21 @@ describe('grid tool', () => {
     expect(col0.map((t) => t.label)).toEqual(['1', '2'])
   })
 
+  it('a tighter aisle packs more tables into the same rectangle', () => {
+    const s = useEditor.getState()
+    s.setPlaceShape('round')
+    // default aisle 2.0 → 3.8m pitch → 4 × 2 = 8 in a 15.2 × 7.6 rect
+    s.applyGrid({ x: 2, y: 2, w: 15.2, h: 7.6 })
+    expect(useEditor.getState().tables.length).toBe(8)
+    // aisle 1.0 → 2.8m pitch → 5 × 2 = 10 more tables in the SAME rect
+    useEditor.getState().reset()
+    setScale()
+    useEditor.getState().setPlaceShape('round')
+    useEditor.getState().setGridAisle(1.0)
+    useEditor.getState().applyGrid({ x: 2, y: 2, w: 15.2, h: 7.6 })
+    expect(useEditor.getState().tables.length).toBe(10)
+  })
+
   it('grid numbering continues after existing tables', () => {
     const s = useEditor.getState()
     s.setPlaceShape('round')
