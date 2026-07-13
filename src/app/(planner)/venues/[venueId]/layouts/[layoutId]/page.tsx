@@ -209,7 +209,25 @@ export default function EditorPage({
           {seatTables.length} tables · {seats} seats · {stations} station
           {stations === 1 ? '' : 's'}
         </span>
-        <span className="ml-auto text-xs text-slate-400">
+        <span className="ml-auto flex items-center gap-1">
+          <button
+            onClick={() => useEditor.getState().undo()}
+            disabled={s.past.length === 0}
+            title="Undo (⌘Z)"
+            className="rounded-md border border-slate-200 px-2 py-1 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-30"
+          >
+            ↺
+          </button>
+          <button
+            onClick={() => useEditor.getState().redo()}
+            disabled={s.future.length === 0}
+            title="Redo (⇧⌘Z)"
+            className="rounded-md border border-slate-200 px-2 py-1 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-30"
+          >
+            ↻
+          </button>
+        </span>
+        <span className="text-xs text-slate-400">
           {saveState === 'saving' && 'Saving…'}
           {saveState === 'saved' && 'Saved ✓'}
           {saveState === 'error' && (

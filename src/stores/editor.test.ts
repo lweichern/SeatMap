@@ -171,6 +171,87 @@ describe('grid tool', () => {
   })
 })
 
+describe('undo / redo', () => {
+  beforeEach(setScale)
+
+  it('undo removes a placed table; redo restores it', () => {
+    const s = useEditor.getState()
+    s.setPlaceShape('round')
+    s.placeTable(5, 5)
+    expect(useEditor.getState().tables.length).toBe(1)
+    s.undo()
+    expect(useEditor.getState().tables.length).toBe(0)
+    s.redo()
+    expect(useEditor.getState().tables.length).toBe(1)
+    expect(useEditor.getState().tables[0].label).toBe('1')
+  })
+
+  it('a whole grid placement is ONE undo step', () => {
+    const s = useEditor.getState()
+    s.setPlaceShape('round')
+    s.setGridRows(2)
+    s.setGridCols(3)
+    s.applyGrid({ x: 2, y: 2, w: 12, h: 8 })
+    expect(useEditor.getState().tables.length).toBe(6)
+    s.undo()
+    expect(useEditor.getState().tables.length).toBe(0)
+  })
+
+  it('undo restores an inspector edit and a delete', () => {
+    const s = useEditor.getState()
+    s.setPlaceShape('round')
+    s.placeTable(5, 5)
+    const id = useEditor.getState().tables[0].id
+    s.updateTable(id, { seats: 6 })
+    expect(useEditor.getState().tables[0].seats).toBe(6)
+    s.undo()
+    expect(useEditor.getState().tables[0].seats).toBe(10)
+    s.setSelection([id])
+    s.removeSelected()
+    expect(useEditor.getState().tables.length).toBe(0)
+    s.undo()
+    expect(useEditor.getState().tables.length).toBe(1)
+  })
+
+  it('undo covers venue geometry (door / stage / walls)', () => {
+    const s = useEditor.getState()
+    s.addRoomRect(0, 0, 20, 12)
+    s.setDoor(10, 12.4)
+    expect(useEditor.getState().door).not.toBeNull()
+    s.undo()
+    expect(useEditor.getState().door).toBeNull()
+    s.undo()
+    expect(useEditor.getState().walls.length).toBe(0)
+  })
+
+  it('a new action clears the redo stack', () => {
+    const s = useEditor.getState()
+    s.setPlaceShape('round')
+    s.placeTable(5, 5)
+    s.undo()
+    s.placeTable(9, 5)
+    expect(useEditor.getState().future.length).toBe(0)
+    s.redo() // noop
+    expect(useEditor.getState().tables.length).toBe(1)
+  })
+
+  it('undo with an empty history is a safe no-op', () => {
+    useEditor.getState().undo()
+    expect(useEditor.getState().tables.length).toBe(0)
+  })
+})
+
+describe('tool escape', () => {
+  it('setTool back to select is always allowed', () => {
+    setScale()
+    const s = useEditor.getState()
+    s.setTool('place')
+    expect(useEditor.getState().tool).toBe('place')
+    s.setTool('select')
+    expect(useEditor.getState().tool).toBe('select')
+  })
+})
+
 describe('inspector edits', () => {
   beforeEach(setScale)
 

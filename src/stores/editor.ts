@@ -46,6 +46,8 @@ interface EditorState {
   selectedIds: string[]
   routeTargetId: string | null
   dirty: boolean
+  past: EditorSnapshot[]
+  future: EditorSnapshot[]
 
   reset(): void
   loadVenueLayout(data: {
@@ -95,6 +97,50 @@ interface EditorState {
   setSelection(ids: string[]): void
   toggleSelection(id: string): void
   setRouteTarget(id: string | null): void
+
+  /** Push the current geometry onto the undo stack (call BEFORE mutating). */
+  checkpoint(): void
+  undo(): void
+  redo(): void
+}
+
+/** The undoable slice — geometry only, never UI state like tool/selection. */
+export interface EditorSnapshot {
+  scalePxPerM: number | null
+  floorplanUrl: string | null
+  walls: Wall[]
+  door: { x: number; y: number } | null
+  doorWidthM: number
+  registration: { x: number; y: number } | null
+  stage: Stage | null
+  clearM: number
+  tables: TableObj[]
+}
+
+const HISTORY_LIMIT = 50
+
+function takeSnapshot(s: {
+  scalePxPerM: number | null
+  floorplanUrl: string | null
+  walls: Wall[]
+  door: { x: number; y: number } | null
+  doorWidthM: number
+  registration: { x: number; y: number } | null
+  stage: Stage | null
+  clearM: number
+  tables: TableObj[]
+}): EditorSnapshot {
+  return {
+    scalePxPerM: s.scalePxPerM,
+    floorplanUrl: s.floorplanUrl,
+    walls: s.walls,
+    door: s.door,
+    doorWidthM: s.doorWidthM,
+    registration: s.registration,
+    stage: s.stage,
+    clearM: s.clearM,
+    tables: s.tables,
+  }
 }
 
 const INITIAL = {
@@ -121,6 +167,8 @@ const INITIAL = {
   selectedIds: [] as string[],
   routeTargetId: null,
   dirty: false,
+  past: [] as EditorSnapshot[],
+  future: [] as EditorSnapshot[],
 }
 
 /**
@@ -208,23 +256,36 @@ export const useEditor = create<EditorState>((set, get) => ({
     set({ tool, draftWall: [] })
   },
 
-  setScale: (scalePxPerM) => set({ scalePxPerM, dirty: true }),
-  setFloorplanUrl: (floorplanUrl) => set({ floorplanUrl, dirty: true }),
+  setScale: (scalePxPerM) => {
+    get().checkpoint()
+    set({ scalePxPerM, dirty: true })
+  },
+  setFloorplanUrl: (floorplanUrl) => {
+    get().checkpoint()
+    set({ floorplanUrl, dirty: true })
+  },
   toggleSnap: () => set((s) => ({ snapOn: !s.snapOn })),
   setPlaceShape: (placeShape) => set({ placeShape }),
   setGridOrder: (gridOrder) => set({ gridOrder }),
   setGridRot: (gridRot) => set({ gridRot }),
   setGridRows: (gridRows) => set({ gridRows: Math.max(1, Math.min(20, Math.round(gridRows))) }),
   setGridCols: (gridCols) => set({ gridCols: Math.max(1, Math.min(20, Math.round(gridCols))) }),
-  setDoorWidth: (doorWidthM) => set({ doorWidthM, dirty: true }),
-  setClearM: (clearM) => set({ clearM, dirty: true }),
+  setDoorWidth: (doorWidthM) => {
+    get().checkpoint()
+    set({ doorWidthM, dirty: true })
+  },
+  setClearM: (clearM) => {
+    get().checkpoint()
+    set({ clearM, dirty: true })
+  },
 
   addWallPoint: (x, y) =>
     set((s) => ({
       draftWall: [...s.draftWall, s.snapOn ? { x: snapToGrid(x), y: snapToGrid(y) } : { x, y }],
     })),
 
-  finishWall: () =>
+  finishWall: () => {
+    if (get().draftWall.length >= 2) get().checkpoint()
     set((s) => {
       const pts = s.draftWall
       if (pts.length < 2) return { draftWall: [] }
@@ -240,11 +301,13 @@ export const useEditor = create<EditorState>((set, get) => ({
         if (a.x !== b.x || a.y !== b.y) walls.push({ x1: a.x, y1: a.y, x2: b.x, y2: b.y })
       }
       return { walls, draftWall: [], dirty: true }
-    }),
+    })
+  },
 
   cancelWall: () => set({ draftWall: [] }),
 
-  addRoomRect: (x, y, w, h) =>
+  addRoomRect: (x, y, w, h) => {
+    get().checkpoint()
     set((s) => {
       const sn = (v: number) => (s.snapOn ? snapToGrid(v) : v)
       const x1 = sn(x)
@@ -262,30 +325,45 @@ export const useEditor = create<EditorState>((set, get) => ({
         ],
         dirty: true,
       }
-    }),
+    })
+  },
 
-  clearWalls: () => set({ walls: [], draftWall: [], door: null, dirty: true }),
+  clearWalls: () => {
+    get().checkpoint()
+    set({ walls: [], draftWall: [], door: null, dirty: true })
+  },
 
-  setDoor: (x, y) =>
+  setDoor: (x, y) => {
+    get().checkpoint()
     set((s) => {
       // the door must sit ON a wall — project the click onto the nearest one
       const hit = nearestPointOnWalls(s.walls, x, y)
       if (!hit) return {}
       return { door: { x: hit.x, y: hit.y }, dirty: true }
-    }),
+    })
+  },
 
-  setRegistration: (registration) => set({ registration, dirty: true }),
-  setStage: (stage) => set({ stage, dirty: true }),
+  setRegistration: (registration) => {
+    get().checkpoint()
+    set({ registration, dirty: true })
+  },
+  setStage: (stage) => {
+    get().checkpoint()
+    set({ stage, dirty: true })
+  },
 
-  placeTable: (x, y) =>
+  placeTable: (x, y) => {
+    get().checkpoint()
     set((s) => {
       const px = s.snapOn ? snapToGrid(x) : x
       const py = s.snapOn ? snapToGrid(y) : y
       const t = makeTable(s.placeShape, px, py, s.gridRot, s.tables, s.layoutId)
       return { tables: [...s.tables, t], selectedIds: [t.id], dirty: true }
-    }),
+    })
+  },
 
-  applyGrid: (rect) =>
+  applyGrid: (rect) => {
+    get().checkpoint()
     set((s) => {
       const positions = computeGridPositions(rect, s.gridRows, s.gridCols, s.gridOrder)
       const tables = [...s.tables]
@@ -295,7 +373,8 @@ export const useEditor = create<EditorState>((set, get) => ({
         tables.push(makeTable(s.placeShape, p.x, p.y, s.gridRot, tables, s.layoutId))
       }
       return { tables, dirty: true }
-    }),
+    })
+  },
 
   moveTable: (id, x, y) =>
     set((s) => ({
@@ -319,19 +398,23 @@ export const useEditor = create<EditorState>((set, get) => ({
       }
     }),
 
-  updateTable: (id, patch) =>
+  updateTable: (id, patch) => {
+    get().checkpoint()
     set((s) => ({
       tables: s.tables.map((t) => (t.id === id ? { ...t, ...patch } : t)),
       dirty: true,
-    })),
+    }))
+  },
 
-  removeSelected: () =>
+  removeSelected: () => {
+    if (get().selectedIds.length > 0) get().checkpoint()
     set((s) => ({
       tables: s.tables.filter((t) => !s.selectedIds.includes(t.id)),
       selectedIds: [],
       routeTargetId: s.selectedIds.includes(s.routeTargetId ?? '') ? null : s.routeTargetId,
       dirty: true,
-    })),
+    }))
+  },
 
   setSelection: (selectedIds) => set({ selectedIds }),
 
@@ -343,6 +426,42 @@ export const useEditor = create<EditorState>((set, get) => ({
     })),
 
   setRouteTarget: (routeTargetId) => set({ routeTargetId }),
+
+  checkpoint: () =>
+    set((s) => ({
+      past: [...s.past.slice(-(HISTORY_LIMIT - 1)), takeSnapshot(s)],
+      future: [],
+    })),
+
+  undo: () =>
+    set((s) => {
+      const prev = s.past[s.past.length - 1]
+      if (!prev) return {}
+      return {
+        ...prev,
+        past: s.past.slice(0, -1),
+        future: [...s.future, takeSnapshot(s)],
+        selectedIds: [],
+        routeTargetId: null,
+        draftWall: [],
+        dirty: true,
+      }
+    }),
+
+  redo: () =>
+    set((s) => {
+      const next = s.future[s.future.length - 1]
+      if (!next) return {}
+      return {
+        ...next,
+        future: s.future.slice(0, -1),
+        past: [...s.past, takeSnapshot(s)],
+        selectedIds: [],
+        routeTargetId: null,
+        draftWall: [],
+        dirty: true,
+      }
+    }),
 }))
 
 // Debug handle for development tooling / e2e tests

@@ -18,7 +18,8 @@ export function Rail({ unreachable }: Props) {
 
   const toolBtn = (tool: Tool, label: string, disabled = gated) => (
     <button
-      onClick={() => s.setTool(tool)}
+      // clicking the active tool again backs out to Select (so does Esc)
+      onClick={() => s.setTool(s.tool === tool ? 'select' : tool)}
       disabled={disabled}
       className={`rounded-md px-2 py-1.5 text-xs font-medium ${
         s.tool === tool
@@ -156,6 +157,11 @@ export function Rail({ unreachable }: Props) {
             {toolBtn('place', '＋ Place one')}
             {toolBtn('grid', '⠿ Grid tool')}
           </div>
+          {(s.tool === 'place' || s.tool === 'grid') && (
+            <p className="text-[10px] leading-snug text-slate-400">
+              Esc (or click the tool again) to stop placing.
+            </p>
+          )}
           <div className="flex items-center gap-2">
             <label className="flex-1 text-[10px] text-slate-500">
               Numbering
