@@ -12,15 +12,15 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/*
+ * No OS-driven dark mode: each surface picks its own theme explicitly
+ * (planner = light, greeter/guest/screen = dark slate classes). The scaffold's
+ * prefers-color-scheme override made input text white-on-white for dark-mode
+ * users on the light planner pages.
+ */
 body {
   background: var(--background);
   color: var(--foreground);
+  color-scheme: light;
   font-family: Arial, Helvetica, sans-serif;
 }
