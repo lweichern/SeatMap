@@ -468,9 +468,9 @@ function sampleRoute(path: { x: number; y: number }[], step: number) {
 
 /**
  * ⚠️ Flat DISCS on the floor, not spheres — a disc presents its full face to
- * the camera and reads as a footprint. Core + halo per dot. A brightness
- * wave sweeps desk → table, overshoots and HOLDS (a landing wave says
- * "destination"; a looping one says "track").
+ * the camera and reads as a footprint. Core + halo per dot. A brightness +
+ * size wave sweeps desk → table on repeat — always travelling TOWARD the
+ * table, never backwards, with a beat of quiet between pulses.
  */
 function RouteDots({ route }: { route: RouteResult }) {
   const dots = useMemo(() => {
@@ -492,20 +492,26 @@ function RouteDots({ route }: { route: RouteResult }) {
   }, [route])
 
   const coreRefs = useRef<(THREE.MeshBasicMaterial | null)[]>([])
+  const dotRefs = useRef<(THREE.Mesh | null)[]>([])
   const startRef = useRef<number | null>(null)
 
   useFrame(({ clock }) => {
     if (startRef.current === null) startRef.current = clock.elapsedTime
     const t = clock.elapsedTime - startRef.current
     const n = dots.sampled.length
-    // wave position overshoots the end and holds there
-    const wave = Math.min(t * 9, n + 14)
+    // repeating sweep desk → table, with a short quiet gap between pulses
+    const wave = (t * 11) % (n + 16)
     for (let i = 0; i < n; i++) {
       const m = coreRefs.current[i]
       if (!m) continue
       const d = Math.abs(i - wave)
       const pulse = Math.max(0, 1 - (d * d) / 36) // squared falloff → discrete pulse
       m.opacity = 0.55 + 0.45 * pulse // resting 0.55: path legible without the wave
+      const mesh = dotRefs.current[i]
+      if (mesh) {
+        const sc = 1 + pulse * 0.9 // the dot physically swells as the wave passes
+        mesh.scale.set(sc, sc, 1)
+      }
     }
   })
 
@@ -520,7 +526,12 @@ function RouteDots({ route }: { route: RouteResult }) {
     <group>
       {dots.sampled.map((p, i) => (
         <group key={i} position={[p.x, 0.025, p.y]}>
-          <mesh rotation={[-Math.PI / 2, 0, 0]}>
+          <mesh
+            ref={(m) => {
+              dotRefs.current[i] = m
+            }}
+            rotation={[-Math.PI / 2, 0, 0]}
+          >
             <circleGeometry args={[0.13, 20]} />
             <meshBasicMaterial
               ref={(m) => {
