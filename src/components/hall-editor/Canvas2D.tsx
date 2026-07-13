@@ -76,13 +76,26 @@ export function Canvas2D({ route, unreachableIds }: Props) {
       const target = e.target as HTMLElement
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT')
         return
-      if (e.key === 'Delete' || e.key === 'Backspace') editor.removeSelected()
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault()
+        if (e.shiftKey) editor.redo()
+        else editor.undo()
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault()
+        editor.redo()
+      } else if (e.key === 'Delete' || e.key === 'Backspace') editor.removeSelected()
       else if (e.key === 'Enter' && editor.tool === 'wall') editor.finishWall()
       else if (e.key === 'Escape') {
+        // Esc backs out of whatever you're in: draft wall → tool → selection
         if (editor.draftWall.length > 0) editor.cancelWall()
-        else editor.setSelection([])
+        else if (editor.tool !== 'select') editor.setTool('select')
+        else {
+          editor.setSelection([])
+          editor.setRouteTarget(null)
+        }
         setScalePrompt(null)
         setDragRect(null)
+        setMarquee(null)
       }
     }
     window.addEventListener('keydown', onKey)
@@ -255,6 +268,7 @@ export function Canvas2D({ route, unreachableIds }: Props) {
         ids = [t.id]
         editor.setSelection(ids)
       }
+      editor.checkpoint() // one undo step per drag, however many tables move
       const orig = new Map<string, Pt>()
       for (const id of ids) {
         const tb = editor.tables.find((x) => x.id === id)
