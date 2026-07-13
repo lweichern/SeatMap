@@ -27,12 +27,14 @@ function table(id: string, x: number, y: number, seats = 10): VenueTable {
   return {
     id,
     layout_id: 'l1',
+    shape: 'round',
+    kind: 'seat',
     label: id,
     x,
     y,
+    rot: 0,
     seats,
-    shape: 'round',
-    diameter_m: 1.8,
+    dia: 1.8,
   }
 }
 
@@ -54,7 +56,7 @@ describe('allocate', () => {
       const used = guests
         .filter((g) => r.assignments[g.id] === t.id)
         .reduce((s, g) => s + g.party_size, 0)
-      expect(used).toBeLessThanOrEqual(t.seats)
+      expect(used).toBeLessThanOrEqual(t.seats ?? 0)
     }
   })
 

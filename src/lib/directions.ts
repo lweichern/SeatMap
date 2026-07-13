@@ -13,7 +13,7 @@ export function describeTablePosition(table: VenueTable, venue: Venue): string {
   // which end of the hall is "front"?
   let frontIsTop = true
   if (venue.stage) frontIsTop = venue.stage.y + venue.stage.h / 2 < h / 2
-  else if (venue.entrance) frontIsTop = venue.entrance.y > h / 2
+  else if (venue.door) frontIsTop = venue.door.y > h / 2
 
   const depth = table.y / h // 0 = top, 1 = bottom
   const frontness = frontIsTop ? depth : 1 - depth // 0 = front, 1 = back
@@ -39,10 +39,10 @@ export function describeTablePosition(table: VenueTable, venue: Venue): string {
       d: dist(table.x, table.y, venue.stage.x + venue.stage.w / 2, venue.stage.y + venue.stage.h / 2),
     })
   }
-  if (venue.entrance) {
+  if (venue.door) {
     landmarks.push({
       name: 'the entrance',
-      d: dist(table.x, table.y, venue.entrance.x, venue.entrance.y),
+      d: dist(table.x, table.y, venue.door.x, venue.door.y),
     })
   }
   landmarks.sort((a, b) => a.d - b.d)

@@ -254,7 +254,7 @@ export default function CheckinPage() {
                 <option value="">Table with space…</option>
                 {occ.map((o) => (
                   <option key={o.table.id} value={o.table.id}>
-                    Table {o.table.label} — {o.table.seats - o.totalPax} seats free
+                    Table {o.table.label} — {(o.table.seats ?? 0) - o.totalPax} seats free
                   </option>
                 ))}
               </select>

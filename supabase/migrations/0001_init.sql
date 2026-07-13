@@ -36,8 +36,12 @@ create table venues (
   width_m double precision,
   height_m double precision,
   walls jsonb not null default '[]'::jsonb,       -- [{x1,y1,x2,y2}] metres
-  entrance jsonb,                                  -- {x,y,facing_deg}
+  door jsonb,                                      -- {x,y} ON a wall; a GAP, not a marker
+  door_width_m double precision not null default 2.4,
+  registration jsonb,                              -- {x,y} outside the walls, in the foyer
   stage jsonb,                                     -- {x,y,w,h}
+  floorplan_north_offset_deg double precision,     -- captured now for v2 AR
+  clear_m double precision not null default 0.25,  -- walking clearance (venue setting)
   created_at timestamptz not null default now()
 );
 
@@ -52,14 +56,21 @@ create table venue_table_layouts (
 create table venue_tables (
   id uuid primary key default gen_random_uuid(),
   layout_id uuid not null references venue_table_layouts (id) on delete cascade,
-  label text not null,
-  x double precision not null,                     -- metres, origin top-left
+  shape text not null default 'round'
+    check (shape in ('round', 'banquet', 'square', 'oval', 'buffet')),
+  kind text not null default 'seat' check (kind in ('seat', 'service')),
+  label text not null,                             -- "12" for seating, "Buffet — Seafood" for service
+  x double precision not null,                     -- centre, metres, origin top-left
   y double precision not null,
-  seats int not null default 10,
-  shape text not null default 'round' check (shape in ('round', 'rect')),
-  diameter_m double precision not null default 1.8,
-  w_m double precision,
-  h_m double precision
+  rot double precision not null default 0,         -- degrees
+  seats int,                                       -- seating only
+  dia double precision,                            -- round
+  len double precision,                            -- banquet / square / oval / buffet
+  wid double precision,
+  ends boolean,                                    -- banquet/square: seat the short ends?
+  locked boolean not null default false,
+  -- a buffet modelled as seats:0 leaks everywhere — forbid it at the source
+  constraint service_has_no_seats check (kind <> 'service' or seats is null)
 );
 
 create index venue_tables_layout_idx on venue_tables (layout_id);

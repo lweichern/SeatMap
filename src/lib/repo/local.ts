@@ -34,6 +34,44 @@ const EMPTY: Db = {
   photos: [],
 }
 
+/** In-place upgrade of pre-HALL_EDITOR.md local data to the v2 model. */
+function migrateHallEditorV2(db: Db) {
+  for (const v of db.venues as (Venue & {
+    entrance?: { x: number; y: number } | null
+  })[]) {
+    if (v.door === undefined) {
+      v.door = v.entrance ? { x: v.entrance.x, y: v.entrance.y } : null
+      delete v.entrance
+    }
+    v.door_width_m ??= 2.4
+    v.registration ??= null
+    v.floorplan_north_offset_deg ??= null
+    v.clear_m ??= 0.25
+  }
+  for (const t of db.tables as (Db['tables'][number] & {
+    diameter_m?: number
+    w_m?: number
+    h_m?: number
+  })[]) {
+    if (t.kind === undefined) {
+      const oldShape = t.shape as string
+      t.shape = oldShape === 'rect' ? 'banquet' : 'round'
+      t.kind = 'seat'
+      t.rot ??= 0
+      if (oldShape === 'rect') {
+        t.len = t.w_m ?? 2.4
+        t.wid = t.h_m ?? 0.9
+        t.ends = true
+      } else {
+        t.dia = t.diameter_m ?? 1.8
+      }
+      delete t.diameter_m
+      delete t.w_m
+      delete t.h_m
+    }
+  }
+}
+
 /**
  * localStorage-backed repo so the planner app runs with zero configuration.
  * Used automatically when NEXT_PUBLIC_SUPABASE_URL is not set.
@@ -46,7 +84,9 @@ export class LocalVenueRepo implements VenueRepo {
     if (!raw) return structuredClone(EMPTY)
     try {
       // merge over EMPTY so dbs written before newer collections existed still work
-      return { ...structuredClone(EMPTY), ...(JSON.parse(raw) as Partial<Db>) }
+      const db = { ...structuredClone(EMPTY), ...(JSON.parse(raw) as Partial<Db>) }
+      migrateHallEditorV2(db)
+      return db
     } catch {
       return structuredClone(EMPTY)
     }

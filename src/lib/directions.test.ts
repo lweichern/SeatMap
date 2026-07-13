@@ -14,12 +14,16 @@ const venue: Venue = {
   width_m: 30,
   height_m: 21,
   walls: [],
-  entrance: { x: 15, y: 21, facing_deg: 0 },
+  door: { x: 15, y: 21 },
+  door_width_m: 2.4,
+  registration: { x: 15, y: 23 },
   stage: { x: 10, y: 0, w: 10, h: 3 },
+  floorplan_north_offset_deg: null,
+  clear_m: 0.25,
 }
 
 function table(x: number, y: number): VenueTable {
-  return { id: 't', layout_id: 'l', label: '9', x, y, seats: 10, shape: 'round', diameter_m: 1.8 }
+  return { id: 't', layout_id: 'l', shape: 'round', kind: 'seat', label: '9', x, y, rot: 0, seats: 10, dia: 1.8 }
 }
 
 describe('describeTablePosition', () => {
@@ -41,7 +45,7 @@ describe('describeTablePosition', () => {
   })
 
   it('works without stage or entrance (no landmark clause)', () => {
-    const bare = { ...venue, stage: null, entrance: null }
+    const bare = { ...venue, stage: null, door: null, registration: null }
     const d = describeTablePosition(table(26, 18), bare).toLowerCase()
     expect(d).toContain('back-right')
     expect(d).not.toContain('stage')

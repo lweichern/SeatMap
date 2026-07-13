@@ -27,7 +27,7 @@ function guest(id: string, over: Partial<Guest> = {}): Guest {
 }
 
 function table(id: string, label: string): VenueTable {
-  return { id, layout_id: 'l1', label, x: 0, y: 0, seats: 10, shape: 'round', diameter_m: 1.8 }
+  return { id, layout_id: 'l1', shape: 'round', kind: 'seat', label, x: 0, y: 0, rot: 0, seats: 10, dia: 1.8 }
 }
 
 describe('GreeterDb', () => {

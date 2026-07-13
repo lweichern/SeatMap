@@ -5,18 +5,12 @@ import { Component, use, useEffect, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { resolveGuest, type GuestView } from '@/lib/guest-view'
 import { describeTablePosition } from '@/lib/directions'
-import { Hall2D } from '@/components/guest/Hall2D'
+import { Hall2D, type HallViewProps } from '@/components/guest/Hall2D'
 import { PhotoTab } from '@/components/guest/PhotoTab'
-import type { Hall3DProps } from '@/components/guest/Hall3D'
 
-const Hall3D = dynamic(() => import('@/components/guest/Hall3D'), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-full items-center justify-center text-sm text-slate-500">
-      Loading map…
-    </div>
-  ),
-})
+// TODO(hall-editor-v2 task 6): replace with the shared <HallScene> from
+// lib/scene-builder + walking route. 2D fallback keeps the page working.
+const Hall3D: ((p: HallViewProps) => React.ReactNode) | null = null
 
 /** If WebGL is broken in any way, the 2D map takes over. Never a blank screen. */
 class MapErrorBoundary extends Component<
@@ -80,12 +74,14 @@ export default function GuestPage({
   }
 
   const { guest, event, venue, tables, table } = view
-  const hallProps: Hall3DProps = {
+  const hallProps: HallViewProps = {
     widthM: venue.width_m ?? 40,
     heightM: venue.height_m ?? 25,
     walls: venue.walls,
+    door: venue.door,
+    doorWidthM: venue.door_width_m,
+    registration: venue.registration,
     stage: venue.stage,
-    entrance: venue.entrance,
     tables,
     guestTableId: table?.id ?? null,
   }
@@ -132,7 +128,7 @@ export default function GuestPage({
 
       {tab === 'map' && (
         <div className="mx-auto mt-4 h-[62vh] w-full max-w-3xl overflow-hidden rounded-t-2xl px-2">
-          {use3d ? (
+          {use3d && Hall3D ? (
             <MapErrorBoundary fallback={<Hall2D {...hallProps} />}>
               <Hall3D {...hallProps} />
             </MapErrorBoundary>
