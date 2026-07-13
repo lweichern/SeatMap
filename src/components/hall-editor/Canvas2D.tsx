@@ -13,7 +13,7 @@ import {
   Text,
 } from 'react-konva'
 import type Konva from 'konva'
-import { useEditor, computeGridPositions, gridSpacing } from '@/stores/editor'
+import { useEditor, computeGridPositions } from '@/stores/editor'
 import { deriveScale, dist } from '@/lib/geometry'
 import { loadImage } from '@/lib/floorplan'
 import { halfExtent, seatPositions } from '@/lib/table-geometry'
@@ -217,10 +217,9 @@ export function Canvas2D({ route, unreachableIds }: Props) {
             w: Math.abs(dragRect.b.x - dragRect.a.x) / pxPerM,
             h: Math.abs(dragRect.b.y - dragRect.a.y) / pxPerM,
           },
-          editor.placeShape,
-          editor.gridRot,
+          editor.gridRows,
+          editor.gridCols,
           editor.gridOrder,
-          editor.gridAisle,
         )
       : null
 

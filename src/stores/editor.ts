@@ -40,8 +40,9 @@ interface EditorState {
   snapOn: boolean
   gridOrder: GridOrder
   gridRot: 0 | 45 | 90
-  /** Aisle between table footprints in the grid tool. Tighter = more tables. */
-  gridAisle: number
+  /** The grid tool places EXACTLY rows × cols, evenly spread over the drag. */
+  gridRows: number
+  gridCols: number
   selectedIds: string[]
   routeTargetId: string | null
   dirty: boolean
@@ -70,7 +71,8 @@ interface EditorState {
   setPlaceShape(shape: Shape): void
   setGridOrder(order: GridOrder): void
   setGridRot(rot: 0 | 45 | 90): void
-  setGridAisle(m: number): void
+  setGridRows(n: number): void
+  setGridCols(n: number): void
   setDoorWidth(m: number): void
   setClearM(m: number): void
 
@@ -112,43 +114,30 @@ const INITIAL = {
   snapOn: true,
   gridOrder: 'rows' as GridOrder,
   gridRot: 0 as const,
-  gridAisle: DEFAULT_GRID_AISLE,
+  gridRows: 3,
+  gridCols: 5,
   selectedIds: [] as string[],
   routeTargetId: null,
   dirty: false,
 }
 
-/** Grid spacing per axis for a shape at a rotation (footprint + aisle). */
-export function gridSpacing(
-  shape: Shape,
-  rot: number,
-  aisle: number = DEFAULT_GRID_AISLE,
-): { sx: number; sy: number } {
-  const d = SHAPES[shape].defaults
-  const along = d.dia ?? d.len ?? 1.8
-  const across = d.dia ?? d.wid ?? 1.8
-  const diag = rot === 45
-  const fx = diag ? Math.hypot(along, across) : rot === 90 ? across : along
-  const fy = diag ? Math.hypot(along, across) : rot === 90 ? along : across
-  return { sx: fx + aisle, sy: fy + aisle }
-}
-
 /**
  * Grid positions in NUMBERING ORDER — shared by the live ghost preview and
- * applyGrid so what you see is exactly what you get.
+ * applyGrid so what you see is exactly what you get. Exactly rows × cols
+ * tables, evenly spread over the dragged rectangle (half-pitch margins).
  */
 export function computeGridPositions(
   rect: { x: number; y: number; w: number; h: number },
-  shape: Shape,
-  rot: number,
+  rows: number,
+  cols: number,
   order: GridOrder,
-  aisle: number = DEFAULT_GRID_AISLE,
 ): { x: number; y: number; rows: number; cols: number }[] {
-  const { sx, sy } = gridSpacing(shape, rot, aisle)
-  const cols = Math.max(1, Math.floor(rect.w / sx))
-  const rows = Math.max(1, Math.floor(rect.h / sy))
-  const ox = rect.x + (rect.w - cols * sx) / 2 + sx / 2
-  const oy = rect.y + (rect.h - rows * sy) / 2 + sy / 2
+  rows = Math.max(1, Math.round(rows))
+  cols = Math.max(1, Math.round(cols))
+  const sx = rect.w / cols
+  const sy = rect.h / rows
+  const ox = rect.x + sx / 2
+  const oy = rect.y + sy / 2
   const cells: [number, number][] = []
   if (order === 'cols') {
     for (let c = 0; c < cols; c++) for (let r = 0; r < rows; r++) cells.push([r, c])
@@ -223,7 +212,8 @@ export const useEditor = create<EditorState>((set, get) => ({
   setPlaceShape: (placeShape) => set({ placeShape }),
   setGridOrder: (gridOrder) => set({ gridOrder }),
   setGridRot: (gridRot) => set({ gridRot }),
-  setGridAisle: (gridAisle) => set({ gridAisle }),
+  setGridRows: (gridRows) => set({ gridRows: Math.max(1, Math.min(20, Math.round(gridRows))) }),
+  setGridCols: (gridCols) => set({ gridCols: Math.max(1, Math.min(20, Math.round(gridCols))) }),
   setDoorWidth: (doorWidthM) => set({ doorWidthM, dirty: true }),
   setClearM: (clearM) => set({ clearM, dirty: true }),
 
@@ -295,18 +285,12 @@ export const useEditor = create<EditorState>((set, get) => ({
 
   applyGrid: (rect) =>
     set((s) => {
-      const positions = computeGridPositions(
-        rect,
-        s.placeShape,
-        s.gridRot,
-        s.gridOrder,
-        s.gridAisle,
-      )
+      const positions = computeGridPositions(rect, s.gridRows, s.gridCols, s.gridOrder)
       const tables = [...s.tables]
+      // no per-table snapping here — even spacing beats grid alignment,
+      // and the computed pitch is already perfectly regular
       for (const p of positions) {
-        const x = s.snapOn ? snapToGrid(p.x) : p.x
-        const y = s.snapOn ? snapToGrid(p.y) : p.y
-        tables.push(makeTable(s.placeShape, x, y, s.gridRot, tables, s.layoutId))
+        tables.push(makeTable(s.placeShape, p.x, p.y, s.gridRot, tables, s.layoutId))
       }
       return { tables, dirty: true }
     }),
