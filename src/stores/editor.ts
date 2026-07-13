@@ -88,6 +88,8 @@ interface EditorState {
   placeTable(x: number, y: number): void
   applyGrid(rect: { x: number; y: number; w: number; h: number }): void
   moveTable(id: string, x: number, y: number): void
+  /** Batch move (group drag) — positions are applied as-is, no per-table snap. */
+  moveTables(updates: { id: string; x: number; y: number }[]): void
   updateTable(id: string, patch: Partial<TableObj>): void
   removeSelected(): void
   setSelection(ids: string[]): void
@@ -304,6 +306,18 @@ export const useEditor = create<EditorState>((set, get) => ({
       ),
       dirty: true,
     })),
+
+  moveTables: (updates) =>
+    set((s) => {
+      const byId = new Map(updates.map((u) => [u.id, u]))
+      return {
+        tables: s.tables.map((t) => {
+          const u = byId.get(t.id)
+          return u ? { ...t, x: u.x, y: u.y } : t
+        }),
+        dirty: true,
+      }
+    }),
 
   updateTable: (id, patch) =>
     set((s) => ({
