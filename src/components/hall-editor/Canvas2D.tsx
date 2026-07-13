@@ -36,6 +36,9 @@ export function Canvas2D({ route, unreachableIds }: Props) {
   const [size, setSize] = useState({ w: 800, h: 600 })
   const [floorplanImg, setFloorplanImg] = useState<HTMLImageElement | null>(null)
   const [dragRect, setDragRect] = useState<{ a: Pt; b: Pt } | null>(null)
+  const [marquee, setMarquee] = useState<{ a: Pt; b: Pt } | null>(null)
+  // group drag: original positions (metres) of every selected table at drag start
+  const groupDrag = useRef<{ anchorId: string; startPx: Pt; orig: Map<string, Pt> } | null>(null)
   const [scalePrompt, setScalePrompt] = useState<{ linePx: number } | null>(null)
   const [scaleInput, setScaleInput] = useState('')
   const [view, setView] = useState({ x: 40, y: 40, zoom: 1 })
@@ -122,7 +125,7 @@ export function Canvas2D({ route, unreachableIds }: Props) {
       const m = toM(p)
       switch (editor.tool) {
         case 'select':
-          if (isEmptyTarget(e)) editor.setSelection([])
+          if (isEmptyTarget(e)) setMarquee({ a: p, b: p })
           break
         case 'wall':
           editor.addWallPoint(m.x, m.y)
@@ -153,9 +156,30 @@ export function Canvas2D({ route, unreachableIds }: Props) {
     const p = worldPos()
     if (!p) return
     setDragRect((d) => (d ? { ...d, b: p } : d))
+    setMarquee((m) => (m ? { ...m, b: p } : m))
   }, [worldPos])
 
   const onMouseUp = useCallback(() => {
+    if (marquee) {
+      const x1 = Math.min(marquee.a.x, marquee.b.x) / pxPerM
+      const x2 = Math.max(marquee.a.x, marquee.b.x) / pxPerM
+      const y1 = Math.min(marquee.a.y, marquee.b.y) / pxPerM
+      const y2 = Math.max(marquee.a.y, marquee.b.y) / pxPerM
+      if ((x2 - x1) * pxPerM < 4 && (y2 - y1) * pxPerM < 4) {
+        // tiny drag = a click on empty space
+        editor.setSelection([])
+        editor.setRouteTarget(null)
+      } else {
+        const hit = editor.tables.filter(
+          (t) => t.x >= x1 && t.x <= x2 && t.y >= y1 && t.y <= y2,
+        )
+        editor.setSelection(hit.map((t) => t.id))
+        editor.setRouteTarget(
+          hit.length === 1 && hit[0].kind === 'seat' ? hit[0].id : null,
+        )
+      }
+      setMarquee(null)
+    }
     if (!dragRect) return
     const { a, b } = dragRect
     const lenPx = dist(a.x, a.y, b.x, b.y)
@@ -181,7 +205,7 @@ export function Canvas2D({ route, unreachableIds }: Props) {
       editor.setTool('select')
     }
     setDragRect(null)
-  }, [dragRect, editor, pxPerM])
+  }, [dragRect, marquee, editor, pxPerM])
 
   const onDblClick = useCallback(() => {
     if (editor.tool !== 'wall') return
@@ -222,6 +246,66 @@ export function Canvas2D({ route, unreachableIds }: Props) {
           editor.gridOrder,
         )
       : null
+
+  // dragging any selected table carries the WHOLE selection with it, live
+  const onTableDragStart = useCallback(
+    (t: TableObj, node: Konva.Node) => {
+      let ids = editor.selectedIds
+      if (!ids.includes(t.id)) {
+        ids = [t.id]
+        editor.setSelection(ids)
+      }
+      const orig = new Map<string, Pt>()
+      for (const id of ids) {
+        const tb = editor.tables.find((x) => x.id === id)
+        if (tb) orig.set(id, { x: tb.x, y: tb.y })
+      }
+      groupDrag.current = { anchorId: t.id, startPx: { x: node.x(), y: node.y() }, orig }
+    },
+    [editor],
+  )
+
+  const lastMoveRef = useRef(0)
+  const onTableDragMove = useCallback(
+    (t: TableObj, node: Konva.Node) => {
+      const g = groupDrag.current
+      if (!g || g.anchorId !== t.id || g.orig.size <= 1) return
+      // throttle: route + validation memos re-run on every store change
+      const now = performance.now()
+      if (now - lastMoveRef.current < 50) return
+      lastMoveRef.current = now
+      const dx = (node.x() - g.startPx.x) / pxPerM
+      const dy = (node.y() - g.startPx.y) / pxPerM
+      editor.moveTables(
+        [...g.orig.entries()].map(([id, o]) => ({ id, x: o.x + dx, y: o.y + dy })),
+      )
+    },
+    [editor, pxPerM],
+  )
+
+  const onTableDragEnd = useCallback(
+    (t: TableObj, node: Konva.Node) => {
+      const g = groupDrag.current
+      groupDrag.current = null
+      if (!g || g.anchorId !== t.id) return
+      if (g.orig.size <= 1) {
+        // single table keeps the classic position snap
+        editor.moveTable(t.id, node.x() / pxPerM, node.y() / pxPerM)
+        return
+      }
+      // group: snap the DELTA, not each position — relative layout stays intact
+      let dx = (node.x() - g.startPx.x) / pxPerM
+      let dy = (node.y() - g.startPx.y) / pxPerM
+      if (editor.snapOn) {
+        dx = Math.round(dx * 2) / 2
+        dy = Math.round(dy * 2) / 2
+      }
+      editor.moveTables(
+        [...g.orig.entries()].map(([id, o]) => ({ id, x: o.x + dx, y: o.y + dy })),
+      )
+    },
+    [editor, pxPerM],
+  )
 
   const cursor =
     editor.tool === 'select' ? 'default' : editor.tool === 'place' ? 'copy' : 'crosshair'
@@ -394,7 +478,9 @@ export function Canvas2D({ route, unreachableIds }: Props) {
                   editor.setRouteTarget(t.kind === 'seat' ? t.id : null)
                 }
               }}
-              onDragEnd={(xPx, yPx) => editor.moveTable(t.id, xPx / pxPerM, yPx / pxPerM)}
+              onDragStart={(node) => onTableDragStart(t, node)}
+              onDragMove={(node) => onTableDragMove(t, node)}
+              onDragEnd={(node) => onTableDragEnd(t, node)}
             />
           ))}
 
@@ -415,6 +501,19 @@ export function Canvas2D({ route, unreachableIds }: Props) {
             </Group>
           )}
 
+          {marquee && (
+            <Rect
+              x={Math.min(marquee.a.x, marquee.b.x)}
+              y={Math.min(marquee.a.y, marquee.b.y)}
+              width={Math.abs(marquee.b.x - marquee.a.x)}
+              height={Math.abs(marquee.b.y - marquee.a.y)}
+              fill="rgba(37,99,235,0.08)"
+              stroke="#2563eb"
+              strokeWidth={1}
+              dash={[4, 4]}
+              listening={false}
+            />
+          )}
           {dragRect && editor.tool !== 'place' && (
             <>
               {editor.tool === 'calibrate' ? (
@@ -588,6 +687,8 @@ function TableGlyph({
   unreachable,
   draggable,
   onSelect,
+  onDragStart,
+  onDragMove,
   onDragEnd,
 }: {
   t: TableObj
@@ -596,7 +697,9 @@ function TableGlyph({
   unreachable: boolean
   draggable: boolean
   onSelect: (e: Konva.KonvaEventObject<MouseEvent>) => void
-  onDragEnd: (xPx: number, yPx: number) => void
+  onDragStart: (node: Konva.Node) => void
+  onDragMove: (node: Konva.Node) => void
+  onDragEnd: (node: Konva.Node) => void
 }) {
   const service = t.kind === 'service'
   const fill = selected ? '#fef3c7' : service ? '#7c2d12' : '#ffffff'
@@ -615,7 +718,9 @@ function TableGlyph({
         e.cancelBubble = true
         onSelect(e)
       }}
-      onDragEnd={(e) => onDragEnd(e.target.x(), e.target.y())}
+      onDragStart={(e) => onDragStart(e.target)}
+      onDragMove={(e) => onDragMove(e.target)}
+      onDragEnd={(e) => onDragEnd(e.target)}
     >
       {unreachable && (
         <Circle radius={m2p(Math.hypot(hx, hy) + 0.8)} stroke="#ef4444" strokeWidth={3} dash={[6, 4]} />
