@@ -16,8 +16,8 @@ export type Tool =
 
 export type GridOrder = 'rows' | 'serpentine' | 'cols'
 
-/** Aisle between table footprints when the grid tool auto-spaces. */
-const GRID_AISLE = 2.0
+/** Default aisle between table footprints when the grid tool auto-spaces. */
+export const DEFAULT_GRID_AISLE = 2.0
 /** Tools that stay usable before the scale is calibrated. */
 const UNGATED: Tool[] = ['select', 'calibrate']
 
@@ -40,6 +40,8 @@ interface EditorState {
   snapOn: boolean
   gridOrder: GridOrder
   gridRot: 0 | 45 | 90
+  /** Aisle between table footprints in the grid tool. Tighter = more tables. */
+  gridAisle: number
   selectedIds: string[]
   routeTargetId: string | null
   dirty: boolean
@@ -68,6 +70,7 @@ interface EditorState {
   setPlaceShape(shape: Shape): void
   setGridOrder(order: GridOrder): void
   setGridRot(rot: 0 | 45 | 90): void
+  setGridAisle(m: number): void
   setDoorWidth(m: number): void
   setClearM(m: number): void
 
@@ -109,20 +112,25 @@ const INITIAL = {
   snapOn: true,
   gridOrder: 'rows' as GridOrder,
   gridRot: 0 as const,
+  gridAisle: DEFAULT_GRID_AISLE,
   selectedIds: [] as string[],
   routeTargetId: null,
   dirty: false,
 }
 
 /** Grid spacing per axis for a shape at a rotation (footprint + aisle). */
-export function gridSpacing(shape: Shape, rot: number): { sx: number; sy: number } {
+export function gridSpacing(
+  shape: Shape,
+  rot: number,
+  aisle: number = DEFAULT_GRID_AISLE,
+): { sx: number; sy: number } {
   const d = SHAPES[shape].defaults
   const along = d.dia ?? d.len ?? 1.8
   const across = d.dia ?? d.wid ?? 1.8
   const diag = rot === 45
   const fx = diag ? Math.hypot(along, across) : rot === 90 ? across : along
   const fy = diag ? Math.hypot(along, across) : rot === 90 ? along : across
-  return { sx: fx + GRID_AISLE, sy: fy + GRID_AISLE }
+  return { sx: fx + aisle, sy: fy + aisle }
 }
 
 /**
@@ -134,8 +142,9 @@ export function computeGridPositions(
   shape: Shape,
   rot: number,
   order: GridOrder,
+  aisle: number = DEFAULT_GRID_AISLE,
 ): { x: number; y: number; rows: number; cols: number }[] {
-  const { sx, sy } = gridSpacing(shape, rot)
+  const { sx, sy } = gridSpacing(shape, rot, aisle)
   const cols = Math.max(1, Math.floor(rect.w / sx))
   const rows = Math.max(1, Math.floor(rect.h / sy))
   const ox = rect.x + (rect.w - cols * sx) / 2 + sx / 2
@@ -214,6 +223,7 @@ export const useEditor = create<EditorState>((set, get) => ({
   setPlaceShape: (placeShape) => set({ placeShape }),
   setGridOrder: (gridOrder) => set({ gridOrder }),
   setGridRot: (gridRot) => set({ gridRot }),
+  setGridAisle: (gridAisle) => set({ gridAisle }),
   setDoorWidth: (doorWidthM) => set({ doorWidthM, dirty: true }),
   setClearM: (clearM) => set({ clearM, dirty: true }),
 
@@ -285,7 +295,13 @@ export const useEditor = create<EditorState>((set, get) => ({
 
   applyGrid: (rect) =>
     set((s) => {
-      const positions = computeGridPositions(rect, s.placeShape, s.gridRot, s.gridOrder)
+      const positions = computeGridPositions(
+        rect,
+        s.placeShape,
+        s.gridRot,
+        s.gridOrder,
+        s.gridAisle,
+      )
       const tables = [...s.tables]
       for (const p of positions) {
         const x = s.snapOn ? snapToGrid(p.x) : p.x

@@ -181,7 +181,28 @@ export function Rail({ unreachable }: Props) {
                 <option value={45}>45°</option>
               </select>
             </label>
+            <label className="w-14 text-[10px] text-slate-500">
+              Aisle (m)
+              <input
+                type="number"
+                step={0.25}
+                min={0.5}
+                max={6}
+                defaultValue={s.gridAisle}
+                onChange={(e) => {
+                  const v = parseFloat(e.target.value)
+                  if (Number.isFinite(v) && v >= 0.5 && v <= 6) s.setGridAisle(v)
+                }}
+                className="mt-0.5 w-full rounded border border-slate-300 px-1 py-1 text-xs"
+              />
+            </label>
           </div>
+          {s.gridAisle < 1.75 && (
+            <p className="text-[10px] leading-snug text-amber-600">
+              Below ~1.75m the chair rings squeeze the walking aisles — expect
+              amber/red routes in the validation check.
+            </p>
+          )}
         </div>,
       )}
 
