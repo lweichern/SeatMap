@@ -1,5 +1,18 @@
 import { snapToGrid } from './geometry'
-import type { VenueTable } from './types'
+import type { TableObj, VenueTable } from './types'
+
+/** Seat count that is safe to sum: service stations contribute 0, always. */
+export function seatsOf(t: TableObj): number {
+  return t.kind === 'service' ? 0 : (t.seats ?? 0)
+}
+
+/**
+ * Next table number, walking SEATING tables only — a buffet must never
+ * consume number 13, or the guest sent to Table 13 finds a tray of prawns.
+ */
+export function nextTableNumber(tables: TableObj[]): string {
+  return nextLabel(tables.filter((t) => t.kind === 'seat').map((t) => t.label))
+}
 
 /** Smallest positive integer (as a string) not already used as a label. */
 export function nextLabel(existing: string[]): string {

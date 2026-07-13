@@ -1,59 +1,66 @@
-'use client'
+"use client";
 
-import { useCallback, useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { getRepo } from '@/lib/repo'
-import { newTableId } from '@/lib/layout-ops'
-import type { Venue, VenueTableLayout, WeddingEvent } from '@/lib/types'
+import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { getRepo } from "@/lib/repo";
+import { newTableId } from "@/lib/layout-ops";
+import type { Venue, VenueTableLayout, WeddingEvent } from "@/lib/types";
 
 export default function EventsPage() {
-  const router = useRouter()
-  const [events, setEvents] = useState<WeddingEvent[]>([])
-  const [venues, setVenues] = useState<Venue[]>([])
-  const [layouts, setLayouts] = useState<VenueTableLayout[]>([])
-  const [form, setForm] = useState({ couple: '', date: '', venueId: '', layoutId: '' })
-  const [loaded, setLoaded] = useState(false)
+  const router = useRouter();
+  const [events, setEvents] = useState<WeddingEvent[]>([]);
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [layouts, setLayouts] = useState<VenueTableLayout[]>([]);
+  const [form, setForm] = useState({
+    couple: "",
+    date: "",
+    venueId: "",
+    layoutId: "",
+  });
+  const [loaded, setLoaded] = useState(false);
 
   const refresh = useCallback(async () => {
-    const repo = getRepo()
-    const [es, vs] = await Promise.all([repo.listEvents(), repo.listVenues()])
-    setEvents(es)
-    setVenues(vs)
-    setLoaded(true)
-  }, [])
+    const repo = getRepo();
+    const [es, vs] = await Promise.all([repo.listEvents(), repo.listVenues()]);
+    setEvents(es);
+    setVenues(vs);
+    setLoaded(true);
+  }, []);
 
   useEffect(() => {
-    refresh()
-  }, [refresh])
+    refresh();
+  }, [refresh]);
 
   useEffect(() => {
     if (!form.venueId) {
-      setLayouts([])
-      return
+      setLayouts([]);
+      return;
     }
     getRepo()
       .listLayouts(form.venueId)
-      .then((ls) => setLayouts(ls))
-  }, [form.venueId])
+      .then((ls) => setLayouts(ls));
+  }, [form.venueId]);
 
   async function createEvent() {
-    if (!form.couple.trim() || !form.date || !form.venueId || !form.layoutId) return
-    const id = newTableId()
+    if (!form.couple.trim() || !form.date || !form.venueId || !form.layoutId)
+      return;
+    const id = newTableId();
     await getRepo().saveEvent({
       id,
-      org_id: 'local-org',
+      org_id: "local-org",
       venue_id: form.venueId,
       layout_id: form.layoutId,
       couple_names: form.couple.trim(),
       event_date: form.date,
       starts_at: null,
-      photo_mode: 'moderated_only',
+      photo_mode: "moderated_only",
       guest_token_secret: newTableId(),
-    })
-    router.push(`/events/${id}/guests`)
+    });
+    router.push(`/events/${id}/guests`);
   }
 
-  const venueName = (id: string) => venues.find((v) => v.id === id)?.name ?? '—'
+  const venueName = (id: string) =>
+    venues.find((v) => v.id === id)?.name ?? "—";
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-8">
@@ -66,7 +73,7 @@ export default function EventsPage() {
         <input
           value={form.couple}
           onChange={(e) => setForm({ ...form, couple: e.target.value })}
-          placeholder="Couple, e.g. Wei Chern & Jia Ling"
+          placeholder="Couple, e.g. Adam and Eve"
           className="col-span-2 rounded-md border border-slate-300 px-3 py-2 text-sm"
         />
         <input
@@ -77,7 +84,9 @@ export default function EventsPage() {
         />
         <select
           value={form.venueId}
-          onChange={(e) => setForm({ ...form, venueId: e.target.value, layoutId: '' })}
+          onChange={(e) =>
+            setForm({ ...form, venueId: e.target.value, layoutId: "" })
+          }
           className="rounded-md border border-slate-300 px-3 py-2 text-sm"
         >
           <option value="">Choose venue…</option>
@@ -112,7 +121,8 @@ export default function EventsPage() {
       <div className="mt-8 space-y-3">
         {loaded && events.length === 0 && (
           <p className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-sm text-slate-400">
-            No events yet. {venues.length === 0 && 'Map a venue first, then come back.'}
+            No events yet.{" "}
+            {venues.length === 0 && "Map a venue first, then come back."}
           </p>
         )}
         {events.map((e) => (
@@ -148,8 +158,8 @@ export default function EventsPage() {
               <button
                 onClick={async () => {
                   if (confirm(`Delete event “${e.couple_names}”?`)) {
-                    await getRepo().deleteEvent(e.id)
-                    refresh()
+                    await getRepo().deleteEvent(e.id);
+                    refresh();
                   }
                 }}
                 className="rounded-md border border-red-200 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
@@ -161,5 +171,5 @@ export default function EventsPage() {
         ))}
       </div>
     </div>
-  )
+  );
 }

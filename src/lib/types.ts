@@ -8,13 +8,6 @@ export interface Wall {
   y2: number
 }
 
-export interface Entrance {
-  x: number
-  y: number
-  /** Direction a guest faces when walking in, degrees clockwise from north (up). */
-  facing_deg: number
-}
-
 export interface Stage {
   x: number
   y: number
@@ -22,20 +15,78 @@ export interface Stage {
   h: number
 }
 
-export type TableShape = 'round' | 'rect'
+export type Shape = 'round' | 'banquet' | 'square' | 'oval' | 'buffet'
+export type Kind = 'seat' | 'service'
 
-export interface VenueTable {
+/**
+ * The single shape registry. `kind` is derived from it, never invented
+ * elsewhere. Defaults are what a new table of that shape starts as.
+ */
+export const SHAPES: Record<
+  Shape,
+  { label: string; kind: Kind; defaults: Partial<TableObj> }
+> = {
+  round: { label: 'Round', kind: 'seat', defaults: { seats: 10, dia: 1.8 } },
+  banquet: {
+    label: 'Banquet',
+    kind: 'seat',
+    defaults: { seats: 8, len: 2.4, wid: 0.9, rot: 0, ends: true },
+  },
+  square: {
+    label: 'Square',
+    kind: 'seat',
+    defaults: { seats: 8, len: 1.5, wid: 1.5, rot: 0, ends: true },
+  },
+  oval: {
+    label: 'Oval',
+    kind: 'seat',
+    defaults: { seats: 12, len: 2.6, wid: 1.5, rot: 0 },
+  },
+  buffet: {
+    label: 'Buffet',
+    kind: 'service',
+    defaults: { len: 3.0, wid: 0.8, rot: 0 },
+  },
+}
+
+export const SERVICE_NAME_PRESETS = [
+  'Buffet — Seafood',
+  'Buffet — Vegetarian',
+  'Buffet — Mains',
+  'Buffet — Desserts',
+  'Buffet — Salads',
+  'Drinks Bar',
+  'Cake Table',
+  'Gift Table',
+  'Photo Booth',
+]
+
+export interface TableObj {
   id: string
   layout_id: string
+  shape: Shape
+  /** Denormalised from SHAPES for query convenience. */
+  kind: Kind
+  /** "12" for seating, "Buffet — Seafood" for service. */
   label: string
+  /** Centre, metres. */
   x: number
   y: number
-  seats: number
-  shape: TableShape
-  diameter_m: number
-  w_m?: number
-  h_m?: number
+  /** Degrees; 0 for round. */
+  rot: number
+  // seating only
+  seats?: number
+  dia?: number // round
+  len?: number // banquet / square / oval / buffet
+  wid?: number
+  /** banquet/square: seat the short ends? false = head-table. */
+  ends?: boolean
+  /** Pinned; excluded from re-allocation. */
+  locked?: boolean
 }
+
+/** Legacy alias — Phase 1–6 code referred to tables as VenueTable. */
+export type VenueTable = TableObj
 
 export interface VenueTableLayout {
   id: string
@@ -50,12 +101,21 @@ export interface Venue {
   name: string
   address: string
   floorplan_url: string | null
+  /** From the calibration drag. Gates every downstream tool. */
   scale_px_per_metre: number | null
   width_m: number | null
   height_m: number | null
   walls: Wall[]
-  entrance: Entrance | null
+  /** ON a wall — a GAP carved out of it (2D, 3D and pathfinding grid). */
+  door: { x: number; y: number } | null
+  door_width_m: number
+  /** OUTSIDE the walls, in the foyer. Optional, never load-bearing. */
+  registration: { x: number; y: number } | null
   stage: Stage | null
+  /** For v2 AR. Captured now — it's one tap. */
+  floorplan_north_offset_deg: number | null
+  /** Walking clearance beyond the chair ring (venue setting, not a constant). */
+  clear_m: number
 }
 
 export type PhotoMode = 'live_feed' | 'moderated_only' | 'off'
@@ -115,12 +175,6 @@ export interface Photo {
   uploaded_at: string
   approved_at: string | null
   on_screen: boolean
-}
-
-export const TABLE_DEFAULTS = {
-  seats: 10,
-  shape: 'round' as TableShape,
-  diameter_m: 1.8,
 }
 
 export const GRID_M = 0.5

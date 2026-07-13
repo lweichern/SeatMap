@@ -1,15 +1,16 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { Component, use, useEffect, useState, type ReactNode } from 'react'
+import { Component, use, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { resolveGuest, type GuestView } from '@/lib/guest-view'
 import { describeTablePosition } from '@/lib/directions'
-import { Hall2D } from '@/components/guest/Hall2D'
+import { Hall2D, type HallViewProps } from '@/components/guest/Hall2D'
 import { PhotoTab } from '@/components/guest/PhotoTab'
-import type { Hall3DProps } from '@/components/guest/Hall3D'
+import { findPath } from '@/lib/pathfinding'
+import type { HallSceneProps } from '@/lib/scene-builder'
 
-const Hall3D = dynamic(() => import('@/components/guest/Hall3D'), {
+const GuestHall3D = dynamic(() => import('@/components/guest/GuestHall3D'), {
   ssr: false,
   loading: () => (
     <div className="flex h-full items-center justify-center text-sm text-slate-500">
@@ -80,14 +81,68 @@ export default function GuestPage({
   }
 
   const { guest, event, venue, tables, table } = view
-  const hallProps: Hall3DProps = {
+  return (
+    <GuestBody
+      guest={guest}
+      event={event}
+      venue={venue}
+      tables={tables}
+      table={table}
+      use3d={use3d}
+      tab={tab}
+      setTab={setTab}
+    />
+  )
+}
+
+function GuestBody({
+  guest,
+  event,
+  venue,
+  tables,
+  table,
+  use3d,
+  tab,
+  setTab,
+}: {
+  guest: GuestView['guest']
+  event: GuestView['event']
+  venue: GuestView['venue']
+  tables: GuestView['tables']
+  table: GuestView['table']
+  use3d: boolean
+  tab: 'map' | 'photos'
+  setTab: (t: 'map' | 'photos') => void
+}) {
+  // walking route: desk → door → table, same solver the editor uses
+  const route = useMemo(
+    () => (table && (venue.registration || venue.door) ? findPath(venue, tables, table.id) : null),
+    [venue, tables, table],
+  )
+
+  const hallProps: HallViewProps = {
     widthM: venue.width_m ?? 40,
     heightM: venue.height_m ?? 25,
     walls: venue.walls,
+    door: venue.door,
+    doorWidthM: venue.door_width_m,
+    registration: venue.registration,
     stage: venue.stage,
-    entrance: venue.entrance,
     tables,
     guestTableId: table?.id ?? null,
+    route: route?.path,
+    routeOk: route?.ok,
+  }
+  const sceneProps: HallSceneProps = {
+    walls: venue.walls,
+    door: venue.door,
+    doorWidthM: venue.door_width_m,
+    registration: venue.registration,
+    stage: venue.stage,
+    tables,
+    highlightTableId: table?.id ?? null,
+    route,
+    fallbackSpan: { w: venue.width_m ?? 30, h: venue.height_m ?? 20 },
   }
 
   return (
@@ -134,7 +189,7 @@ export default function GuestPage({
         <div className="mx-auto mt-4 h-[62vh] w-full max-w-3xl overflow-hidden rounded-t-2xl px-2">
           {use3d ? (
             <MapErrorBoundary fallback={<Hall2D {...hallProps} />}>
-              <Hall3D {...hallProps} />
+              <GuestHall3D {...sceneProps} />
             </MapErrorBoundary>
           ) : (
             <Hall2D {...hallProps} />

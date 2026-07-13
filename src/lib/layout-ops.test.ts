@@ -1,17 +1,26 @@
 import { describe, it, expect } from 'vitest'
-import { nextLabel, alignTables, distributeTables, duplicateGrid } from './layout-ops'
+import {
+  alignTables,
+  distributeTables,
+  duplicateGrid,
+  nextLabel,
+  nextTableNumber,
+  seatsOf,
+} from './layout-ops'
 import type { VenueTable } from './types'
 
 function table(over: Partial<VenueTable>): VenueTable {
   return {
     id: Math.random().toString(36).slice(2),
     layout_id: 'L1',
+    shape: 'round',
+    kind: 'seat',
     label: '1',
     x: 0,
     y: 0,
+    rot: 0,
     seats: 10,
-    shape: 'round',
-    diameter_m: 1.8,
+    dia: 1.8,
     ...over,
   }
 }
@@ -28,6 +37,30 @@ describe('nextLabel', () => {
 
   it('ignores non-numeric labels like VIP-1', () => {
     expect(nextLabel(['1', 'VIP-1', '2'])).toBe('3')
+  })
+})
+
+describe('service kind', () => {
+  const buffet = table({
+    id: 'b1',
+    shape: 'buffet',
+    kind: 'service',
+    label: 'Buffet — Seafood',
+    seats: undefined,
+    dia: undefined,
+    len: 3,
+    wid: 0.8,
+  })
+
+  it('seatsOf returns 0 for service regardless of data', () => {
+    expect(seatsOf(buffet)).toBe(0)
+    expect(seatsOf(table({ seats: 10 }))).toBe(10)
+  })
+
+  it('a buffet never consumes a table number', () => {
+    // seating tables 1 and 2 exist; buffet is NOT number 3
+    const tables = [table({ label: '1' }), table({ label: '2' }), buffet]
+    expect(nextTableNumber(tables)).toBe('3')
   })
 })
 

@@ -102,7 +102,9 @@ function buildUnits(
 }
 
 export function allocate(input: AllocationInput): AllocationResult {
-  const { guests, tables, constraints, stage } = input
+  const { guests, constraints, stage } = input
+  // Guests are never seated at a buffet — service objects don't exist here.
+  const tables = input.tables.filter((t) => t.kind === 'seat')
   const iterations = input.iterations ?? 2000
   const rng = makeRng(input.seed ?? 1)
 
@@ -118,7 +120,7 @@ export function allocate(input: AllocationInput): AllocationResult {
   })
   const stageRank = new Map(rankedTables.map((t, i) => [t.id, i]))
 
-  const free = new Map<string, number>(tables.map((t) => [t.id, t.seats]))
+  const free = new Map<string, number>(tables.map((t) => [t.id, t.seats ?? 0]))
   const seatOf = new Map<Unit, string>()
 
   const place = (u: Unit, tableId: string) => {
@@ -198,7 +200,7 @@ export function allocate(input: AllocationInput): AllocationResult {
     for (const [u, tid] of seatOf) used.set(tid, (used.get(tid) ?? 0) + u.size)
     for (const t of tables) {
       const n = used.get(t.id) ?? 0
-      if (n > 0) s += (n / t.seats) * 5
+      if (n > 0) s += (n / (t.seats ?? 1)) * 5
     }
     return s
   }

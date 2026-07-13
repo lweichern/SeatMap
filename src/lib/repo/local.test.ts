@@ -27,8 +27,12 @@ function venue(over: Partial<Venue> = {}): Venue {
     width_m: 40,
     height_m: 25,
     walls: [{ x1: 0, y1: 0, x2: 40, y2: 0 }],
-    entrance: { x: 20, y: 25, facing_deg: 0 },
+    door: { x: 20, y: 25 },
+    door_width_m: 2.4,
+    registration: { x: 20, y: 27 },
     stage: { x: 15, y: 0, w: 10, h: 4 },
+    floorplan_north_offset_deg: null,
+    clear_m: 0.25,
     ...over,
   }
 }
@@ -45,7 +49,7 @@ describe('LocalVenueRepo', () => {
     const all = await repo.listVenues()
     expect(all.length).toBe(1)
     expect(all[0].name).toContain('Grand Ballroom')
-    expect(all[0].entrance).toEqual({ x: 20, y: 25, facing_deg: 0 })
+    expect(all[0].door).toEqual({ x: 20, y: 25 })
   })
 
   it('round-trips a layout with its tables', async () => {
@@ -59,12 +63,14 @@ describe('LocalVenueRepo', () => {
     const tables: VenueTable[] = [1, 2, 3].map((n) => ({
       id: `t${n}`,
       layout_id: 'l1',
+      shape: 'round' as const,
+      kind: 'seat' as const,
       label: String(n),
       x: n * 3,
       y: 5,
+      rot: 0,
       seats: 10,
-      shape: 'round',
-      diameter_m: 1.8,
+      dia: 1.8,
     }))
     await repo.saveLayout(layout, tables)
     const layouts = await repo.listLayouts('v1')

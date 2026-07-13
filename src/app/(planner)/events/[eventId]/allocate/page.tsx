@@ -256,7 +256,7 @@ export default function AllocatePage({
           {sortedTables.map((t) => {
             const seated = byTable.get(t.id) ?? []
             const pax = seated.reduce((s, g) => s + g.party_size, 0)
-            const over = pax > t.seats
+            const over = pax > (t.seats ?? 0)
             return (
               <DropZone
                 key={t.id}
@@ -272,7 +272,7 @@ export default function AllocatePage({
                       over ? 'text-red-600' : 'text-slate-400'
                     }`}
                   >
-                    {pax}/{t.seats}
+                    {pax}/{t.seats ?? 0}
                   </span>
                 </div>
                 <div className="mt-2 flex min-h-8 flex-wrap gap-1.5">

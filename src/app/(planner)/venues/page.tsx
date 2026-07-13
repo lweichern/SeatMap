@@ -43,8 +43,12 @@ export default function VenuesPage() {
       width_m: null,
       height_m: null,
       walls: [],
-      entrance: null,
+      door: null,
+      door_width_m: 2.4,
+      registration: null,
       stage: null,
+      floorplan_north_offset_deg: null,
+      clear_m: 0.25,
     })
     setNewName('')
     refresh()
@@ -95,7 +99,7 @@ export default function VenuesPage() {
                 <h2 className="font-semibold text-slate-900">{v.name}</h2>
                 <p className="text-xs text-slate-400">
                   {v.scale_px_per_metre ? 'Scale set' : 'Scale not set'} ·{' '}
-                  {v.entrance ? 'Entrance marked' : 'Entrance missing'} ·{' '}
+                  {v.door ? 'Door placed' : 'Door missing'} ·{' '}
                   {(layouts[v.id] ?? []).length} layout(s)
                 </p>
               </div>
