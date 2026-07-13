@@ -14,7 +14,7 @@ import {
 } from 'react-konva'
 import type Konva from 'konva'
 import { useEditor, computeGridPositions } from '@/stores/editor'
-import { deriveScale, dist } from '@/lib/geometry'
+import { deriveScale, dist, nearestPointOnWalls, snapToGrid } from '@/lib/geometry'
 import { loadImage } from '@/lib/floorplan'
 import { halfExtent, seatPositions } from '@/lib/table-geometry'
 import { SHAPES, type TableObj } from '@/lib/types'
@@ -375,7 +375,30 @@ export function Canvas2D({ route, unreachableIds }: Props) {
           )}
 
           {editor.stage && (
-            <Group x={m2p(editor.stage.x)} y={m2p(editor.stage.y)} listening={false}>
+            <Group
+              x={m2p(editor.stage.x)}
+              y={m2p(editor.stage.y)}
+              listening={editor.tool === 'select'}
+              draggable={editor.tool === 'select'}
+              onMouseEnter={(e) => {
+                const el = e.target.getStage()?.container()
+                if (el && editor.tool === 'select') el.style.cursor = 'move'
+              }}
+              onMouseLeave={(e) => {
+                const el = e.target.getStage()?.container()
+                if (el) el.style.cursor = ''
+              }}
+              onDragEnd={(e) => {
+                const st = editor.stage!
+                const x = e.target.x() / pxPerM
+                const y = e.target.y() / pxPerM
+                editor.setStage({
+                  ...st,
+                  x: editor.snapOn ? snapToGrid(x) : x,
+                  y: editor.snapOn ? snapToGrid(y) : y,
+                })
+              }}
+            >
               <Rect
                 width={m2p(editor.stage.w)}
                 height={m2p(editor.stage.h)}
@@ -393,6 +416,7 @@ export function Canvas2D({ route, unreachableIds }: Props) {
                 height={m2p(editor.stage.h)}
                 align="center"
                 verticalAlign="middle"
+                listening={false}
               />
             </Group>
           )}
@@ -414,9 +438,34 @@ export function Canvas2D({ route, unreachableIds }: Props) {
           )}
 
           {editor.door && (
-            <Group x={m2p(editor.door.x)} y={m2p(editor.door.y)} listening={false}>
-              <Circle radius={6} fill="#10b981" stroke="#fff" strokeWidth={1.5} />
-              <Text text="DOOR" fontSize={10} fontStyle="bold" fill="#059669" x={8} y={-5} />
+            <Group
+              x={m2p(editor.door.x)}
+              y={m2p(editor.door.y)}
+              listening={editor.tool === 'select'}
+              draggable={editor.tool === 'select'}
+              onMouseEnter={(e) => {
+                const el = e.target.getStage()?.container()
+                if (el && editor.tool === 'select') el.style.cursor = 'move'
+              }}
+              onMouseLeave={(e) => {
+                const el = e.target.getStage()?.container()
+                if (el) el.style.cursor = ''
+              }}
+              onDragMove={(e) => {
+                // the door lives ON a wall — slide it along the nearest one
+                const hit = nearestPointOnWalls(
+                  editor.walls,
+                  e.target.x() / pxPerM,
+                  e.target.y() / pxPerM,
+                )
+                if (hit) e.target.position({ x: m2p(hit.x), y: m2p(hit.y) })
+              }}
+              onDragEnd={(e) =>
+                editor.setDoor(e.target.x() / pxPerM, e.target.y() / pxPerM)
+              }
+            >
+              <Circle radius={8} fill="#10b981" stroke="#fff" strokeWidth={1.5} hitStrokeWidth={12} />
+              <Text text="DOOR" fontSize={10} fontStyle="bold" fill="#059669" x={10} y={-5} listening={false} />
             </Group>
           )}
 
@@ -424,7 +473,24 @@ export function Canvas2D({ route, unreachableIds }: Props) {
             <Group
               x={m2p(editor.registration.x)}
               y={m2p(editor.registration.y)}
-              listening={false}
+              listening={editor.tool === 'select'}
+              draggable={editor.tool === 'select'}
+              onMouseEnter={(e) => {
+                const el = e.target.getStage()?.container()
+                if (el && editor.tool === 'select') el.style.cursor = 'move'
+              }}
+              onMouseLeave={(e) => {
+                const el = e.target.getStage()?.container()
+                if (el) el.style.cursor = ''
+              }}
+              onDragEnd={(e) => {
+                const x = e.target.x() / pxPerM
+                const y = e.target.y() / pxPerM
+                editor.setRegistration({
+                  x: editor.snapOn ? snapToGrid(x) : x,
+                  y: editor.snapOn ? snapToGrid(y) : y,
+                })
+              }}
             >
               <Rect
                 x={-m2p(0.9)}
