@@ -3,7 +3,7 @@
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { seatPositions } from './table-geometry'
+import { halfExtent, seatPositions } from './table-geometry'
 import { labelTexture, type LabelStyle } from './labels'
 import type { RouteResult } from './pathfinding'
 import type { Stage, TableObj, Wall } from './types'
@@ -196,13 +196,29 @@ const CHAIR_COLOR = '#3f4756'
 
 function TableMesh3D({ t, highlighted }: { t: TableObj; highlighted: boolean }) {
   const matRef = useRef<THREE.MeshStandardMaterial>(null)
+  const shaftRef = useRef<THREE.MeshBasicMaterial>(null)
+  const lightRef = useRef<THREE.PointLight>(null)
+  const rippleRef = useRef<THREE.Mesh>(null)
+  const rippleMatRef = useRef<THREE.MeshBasicMaterial>(null)
   useFrame(({ clock }) => {
-    if (highlighted && matRef.current) {
-      matRef.current.emissiveIntensity = 0.65 + Math.sin(clock.elapsedTime * 2.4) * 0.3
+    if (!highlighted) return
+    // one shared beat so every element breathes together
+    const beat = (Math.sin(clock.elapsedTime * 3) + 1) / 2 // 0..1
+    if (matRef.current) matRef.current.emissiveIntensity = 0.35 + beat * 0.95
+    if (shaftRef.current) shaftRef.current.opacity = 0.07 + beat * 0.16
+    if (lightRef.current) lightRef.current.intensity = 8 + beat * 22
+    // radar ripple: a ring expanding outward and fading, then restarting
+    const phase = (clock.elapsedTime % 1.7) / 1.7 // 0..1
+    if (rippleRef.current && rippleMatRef.current) {
+      const sc = 1 + phase * 2.2
+      rippleRef.current.scale.set(sc, sc, 1)
+      rippleMatRef.current.opacity = 0.75 * (1 - phase) * (1 - phase)
     }
   })
 
   const service = t.kind === 'service'
+  const [hx, hy] = halfExtent(t)
+  const rippleR = Math.hypot(hx, hy) + 0.75
   const color = highlighted ? '#f5b52e' : service ? SERVICE_COLOR : MUTED
   const emissive = highlighted ? '#f59e0b' : '#000000'
   const seats = seatPositions(t)
@@ -306,6 +322,7 @@ function TableMesh3D({ t, highlighted }: { t: TableObj; highlighted: boolean }) 
           <mesh position={[0, 2.8, 0]}>
             <cylinderGeometry args={[0.5, 1.6, 4.2, 24, 1, true]} />
             <meshBasicMaterial
+              ref={shaftRef}
               color="#fbbf24"
               transparent
               opacity={0.12}
@@ -313,7 +330,34 @@ function TableMesh3D({ t, highlighted }: { t: TableObj; highlighted: boolean }) 
               depthWrite={false}
             />
           </mesh>
-          <pointLight position={[0, 3.2, 0]} color="#fbbf24" intensity={14} distance={9} />
+          <pointLight
+            ref={lightRef}
+            position={[0, 3.2, 0]}
+            color="#fbbf24"
+            intensity={14}
+            distance={11}
+          />
+          {/* radar ripple on the floor — reads from anywhere in the room */}
+          <mesh
+            ref={rippleRef}
+            rotation={[-Math.PI / 2, 0, 0]}
+            position={[0, 0.03, 0]}
+          >
+            <ringGeometry args={[rippleR, rippleR + 0.22, 48]} />
+            <meshBasicMaterial
+              ref={rippleMatRef}
+              color="#fbbf24"
+              transparent
+              opacity={0.7}
+              depthWrite={false}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+          {/* steady base ring so the spot stays marked between ripples */}
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.025, 0]}>
+            <ringGeometry args={[rippleR - 0.08, rippleR + 0.08, 48]} />
+            <meshBasicMaterial color="#f59e0b" transparent opacity={0.55} depthWrite={false} />
+          </mesh>
         </>
       )}
 
