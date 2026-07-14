@@ -162,6 +162,25 @@ describe('findPath', () => {
     expect(r.ok).toBe(true)
   })
 
+  it('a desk INSIDE the room routes straight to the table — no door detour', () => {
+    // registration inside the hall, table straight up the middle aisle
+    const v = venue({ registration: { x: 10, y: 11.5 } })
+    seq = 0
+    const target = table(10, 4, { id: 'in' })
+    const r = findPath(v, [target], 'in')!
+    expect(r.ok).toBe(true)
+    expect(r.doorIndex).toBe(-1) // no foyer leg
+    // no waypoint anywhere near the door (10, 13)
+    for (const pt of r.path) {
+      expect(Math.hypot(pt.x - 10, pt.y - 13)).toBeGreaterThan(1.4)
+    }
+    // and the path is direct: total length close to the straight-line 7.5m
+    let len = 0
+    for (let i = 1; i < r.path.length; i++)
+      len += Math.hypot(r.path[i].x - r.path[i - 1].x, r.path[i].y - r.path[i - 1].y)
+    expect(len).toBeLessThan(10)
+  })
+
   it('doorIndex splits foyer leg from hall leg', () => {
     const v = venue()
     const tables = grid()
