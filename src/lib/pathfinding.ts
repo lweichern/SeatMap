@@ -119,18 +119,22 @@ export function buildGrid(
     }
   }
 
-  // stage blocks
+  // stage blocks — as a ROTATED rect about its centre
   if (venue.stage) {
     const s = venue.stage
+    const scx = s.x + s.w / 2
+    const scy = s.y + s.h / 2
+    const rad = ((s.rot ?? 0) * Math.PI) / 180
+    const cosR = Math.cos(-rad)
+    const sinR = Math.sin(-rad)
     for (let cy = 0; cy < rows; cy++) {
       for (let cx = 0; cx < cols; cx++) {
         const c = toWorld(g, cx, cy)
-        if (
-          c.x >= s.x - clear &&
-          c.x <= s.x + s.w + clear &&
-          c.y >= s.y - clear &&
-          c.y <= s.y + s.h + clear
-        )
+        const dx = c.x - scx
+        const dy = c.y - scy
+        const lx = dx * cosR - dy * sinR
+        const ly = dx * sinR + dy * cosR
+        if (Math.abs(lx) <= s.w / 2 + clear && Math.abs(ly) <= s.h / 2 + clear)
           g.blocked[idx(g, cx, cy)] = 1
       }
     }

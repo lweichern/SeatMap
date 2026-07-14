@@ -8,7 +8,7 @@ export interface HallViewProps {
   walls: Wall[]
   door: { x: number; y: number } | null
   doorWidthM: number
-  registration: { x: number; y: number } | null
+  registration: { x: number; y: number; rot?: number } | null
   stage: Stage | null
   tables: TableObj[]
   guestTableId: string | null
@@ -40,7 +40,9 @@ export function Hall2D(props: HallViewProps) {
       ))}
 
       {props.stage && (
-        <g>
+        <g
+          transform={`rotate(${props.stage.rot ?? 0} ${props.stage.x + props.stage.w / 2} ${props.stage.y + props.stage.h / 2})`}
+        >
           <rect
             x={props.stage.x}
             y={props.stage.y}
@@ -96,7 +98,9 @@ export function Hall2D(props: HallViewProps) {
       )}
 
       {props.registration && (
-        <g>
+        <g
+          transform={`rotate(${props.registration.rot ?? 0} ${props.registration.x} ${props.registration.y})`}
+        >
           <rect
             x={props.registration.x - 0.9}
             y={props.registration.y - 0.35}

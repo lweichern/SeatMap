@@ -83,7 +83,17 @@ export function Canvas2D({ route, unreachableIds }: Props) {
       } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'y') {
         e.preventDefault()
         editor.redo()
-      } else if (e.key === 'Delete' || e.key === 'Backspace') editor.removeSelected()
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        // read fresh state — this effect doesn't re-register on selection changes
+        const st = useEditor.getState()
+        if (st.selectedFixture === 'stage') {
+          st.setStage(null)
+          st.setSelectedFixture(null)
+        } else if (st.selectedFixture === 'registration') {
+          st.setRegistration(null)
+          st.setSelectedFixture(null)
+        } else st.removeSelected()
+      }
       else if (e.key === 'Enter' && editor.tool === 'wall') editor.finishWall()
       else if (e.key === 'Escape') {
         // Esc backs out of whatever you're in: draft wall → tool → selection
@@ -376,10 +386,15 @@ export function Canvas2D({ route, unreachableIds }: Props) {
 
           {editor.stage && (
             <Group
-              x={m2p(editor.stage.x)}
-              y={m2p(editor.stage.y)}
+              x={m2p(editor.stage.x + editor.stage.w / 2)}
+              y={m2p(editor.stage.y + editor.stage.h / 2)}
+              rotation={editor.stage.rot ?? 0}
               listening={editor.tool === 'select'}
               draggable={editor.tool === 'select'}
+              onClick={(e) => {
+                e.cancelBubble = true
+                editor.setSelectedFixture('stage')
+              }}
               onMouseEnter={(e) => {
                 const el = e.target.getStage()?.container()
                 if (el && editor.tool === 'select') el.style.cursor = 'move'
@@ -390,8 +405,8 @@ export function Canvas2D({ route, unreachableIds }: Props) {
               }}
               onDragEnd={(e) => {
                 const st = editor.stage!
-                const x = e.target.x() / pxPerM
-                const y = e.target.y() / pxPerM
+                const x = e.target.x() / pxPerM - st.w / 2
+                const y = e.target.y() / pxPerM - st.h / 2
                 editor.setStage({
                   ...st,
                   x: editor.snapOn ? snapToGrid(x) : x,
@@ -400,11 +415,17 @@ export function Canvas2D({ route, unreachableIds }: Props) {
               }}
             >
               <Rect
+                x={-m2p(editor.stage.w / 2)}
+                y={-m2p(editor.stage.h / 2)}
                 width={m2p(editor.stage.w)}
                 height={m2p(editor.stage.h)}
-                fill="rgba(147, 51, 234, 0.15)"
+                fill={
+                  editor.selectedFixture === 'stage'
+                    ? 'rgba(147, 51, 234, 0.3)'
+                    : 'rgba(147, 51, 234, 0.15)'
+                }
                 stroke="#9333ea"
-                strokeWidth={2}
+                strokeWidth={editor.selectedFixture === 'stage' ? 3.5 : 2}
                 dash={[10, 5]}
               />
               <Text
@@ -412,6 +433,8 @@ export function Canvas2D({ route, unreachableIds }: Props) {
                 fontSize={13}
                 fontStyle="bold"
                 fill="#9333ea"
+                x={-m2p(editor.stage.w / 2)}
+                y={-m2p(editor.stage.h / 2)}
                 width={m2p(editor.stage.w)}
                 height={m2p(editor.stage.h)}
                 align="center"
@@ -473,8 +496,13 @@ export function Canvas2D({ route, unreachableIds }: Props) {
             <Group
               x={m2p(editor.registration.x)}
               y={m2p(editor.registration.y)}
+              rotation={editor.registration.rot ?? 0}
               listening={editor.tool === 'select'}
               draggable={editor.tool === 'select'}
+              onClick={(e) => {
+                e.cancelBubble = true
+                editor.setSelectedFixture('registration')
+              }}
               onMouseEnter={(e) => {
                 const el = e.target.getStage()?.container()
                 if (el && editor.tool === 'select') el.style.cursor = 'move'
@@ -487,6 +515,7 @@ export function Canvas2D({ route, unreachableIds }: Props) {
                 const x = e.target.x() / pxPerM
                 const y = e.target.y() / pxPerM
                 editor.setRegistration({
+                  ...editor.registration!,
                   x: editor.snapOn ? snapToGrid(x) : x,
                   y: editor.snapOn ? snapToGrid(y) : y,
                 })
@@ -497,9 +526,13 @@ export function Canvas2D({ route, unreachableIds }: Props) {
                 y={-m2p(0.35)}
                 width={m2p(1.8)}
                 height={m2p(0.7)}
-                fill="rgba(14,165,233,0.25)"
+                fill={
+                  editor.selectedFixture === 'registration'
+                    ? 'rgba(14,165,233,0.45)'
+                    : 'rgba(14,165,233,0.25)'
+                }
                 stroke="#0ea5e9"
-                strokeWidth={2}
+                strokeWidth={editor.selectedFixture === 'registration' ? 3.5 : 2}
                 cornerRadius={3}
               />
               <Text

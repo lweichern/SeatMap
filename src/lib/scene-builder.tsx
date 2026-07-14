@@ -20,7 +20,7 @@ export interface HallSceneProps {
   walls: Wall[]
   door: { x: number; y: number } | null
   doorWidthM: number
-  registration: { x: number; y: number } | null
+  registration: { x: number; y: number; rot?: number } | null
   stage: Stage | null
   tables: TableObj[]
   highlightTableId: string | null
@@ -155,7 +155,10 @@ function WallMesh({
 
 function StageMesh({ stage }: { stage: Stage }) {
   return (
-    <group position={[stage.x + stage.w / 2, 0, stage.y + stage.h / 2]}>
+    <group
+      position={[stage.x + stage.w / 2, 0, stage.y + stage.h / 2]}
+      rotation={[0, -(((stage.rot ?? 0) * Math.PI) / 180), 0]}
+    >
       <mesh position={[0, 0.3, 0]}>
         <boxGeometry args={[stage.w, 0.6, stage.h]} />
         <meshStandardMaterial color="#6d28d9" />
@@ -170,9 +173,9 @@ function StageMesh({ stage }: { stage: Stage }) {
   )
 }
 
-function RegistrationDesk({ p }: { p: { x: number; y: number } }) {
+function RegistrationDesk({ p }: { p: { x: number; y: number; rot?: number } }) {
   return (
-    <group position={[p.x, 0, p.y]}>
+    <group position={[p.x, 0, p.y]} rotation={[0, -(((p.rot ?? 0) * Math.PI) / 180), 0]}>
       <mesh position={[0, 0.5, 0]}>
         <boxGeometry args={[1.8, 1.0, 0.7]} />
         <meshStandardMaterial color="#0e7490" />
