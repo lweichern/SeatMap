@@ -76,7 +76,27 @@ export function Canvas2D({ route, unreachableIds }: Props) {
       const target = e.target as HTMLElement
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT')
         return
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'c') {
+        const st = useEditor.getState()
+        if (st.selectedIds.length > 0) {
+          e.preventDefault()
+          st.copySelection()
+        }
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'v') {
+        const st = useEditor.getState()
+        if (st.clipboard.length > 0) {
+          e.preventDefault()
+          st.pasteClipboard(lastPointerM.current ?? undefined)
+        }
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'd') {
+        // ⌘D duplicate = copy + offset-paste in one stroke
+        const st = useEditor.getState()
+        if (st.selectedIds.length > 0) {
+          e.preventDefault()
+          st.copySelection()
+          useEditor.getState().pasteClipboard()
+        }
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
         e.preventDefault()
         if (e.shiftKey) editor.redo()
         else editor.undo()
@@ -175,12 +195,14 @@ export function Canvas2D({ route, unreachableIds }: Props) {
     [editor, toM, worldPos],
   )
 
+  const lastPointerM = useRef<Pt | null>(null)
   const onMouseMove = useCallback(() => {
     const p = worldPos()
     if (!p) return
+    lastPointerM.current = { x: p.x / pxPerM, y: p.y / pxPerM }
     setDragRect((d) => (d ? { ...d, b: p } : d))
     setMarquee((m) => (m ? { ...m, b: p } : m))
-  }, [worldPos])
+  }, [worldPos, pxPerM])
 
   const onMouseUp = useCallback(() => {
     if (marquee) {

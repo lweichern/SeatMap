@@ -46,6 +46,8 @@ interface EditorState {
   selectedIds: string[]
   /** Stage / registration selected for the inspector (exclusive with tables). */
   selectedFixture: 'stage' | 'registration' | null
+  /** Copied tables (editor-local clipboard). */
+  clipboard: TableObj[]
   routeTargetId: string | null
   dirty: boolean
   past: EditorSnapshot[]
@@ -99,6 +101,9 @@ interface EditorState {
   setSelection(ids: string[]): void
   toggleSelection(id: string): void
   setSelectedFixture(f: 'stage' | 'registration' | null): void
+  copySelection(): void
+  /** Paste at a point (clipboard centroid moves there) or offset +1m,+1m. */
+  pasteClipboard(at?: { x: number; y: number }): void
   setRouteTarget(id: string | null): void
 
   /** Push the current geometry onto the undo stack (call BEFORE mutating). */
@@ -169,6 +174,7 @@ const INITIAL = {
   gridCols: 5,
   selectedIds: [] as string[],
   selectedFixture: null,
+  clipboard: [] as TableObj[],
   routeTargetId: null,
   dirty: false,
   past: [] as EditorSnapshot[],
@@ -424,6 +430,47 @@ export const useEditor = create<EditorState>((set, get) => ({
 
   setSelectedFixture: (selectedFixture) =>
     set({ selectedFixture, selectedIds: [], routeTargetId: null }),
+
+  copySelection: () =>
+    set((s) => {
+      const copied = s.tables.filter((t) => s.selectedIds.includes(t.id))
+      return copied.length > 0 ? { clipboard: copied } : {}
+    }),
+
+  pasteClipboard: (at) => {
+    const s0 = get()
+    if (s0.clipboard.length === 0) return
+    get().checkpoint()
+    set((s) => {
+      // clipboard centroid moves to the paste point; snap the DELTA so the
+      // copied group keeps its exact relative layout
+      const cx = s.clipboard.reduce((a, t) => a + t.x, 0) / s.clipboard.length
+      const cy = s.clipboard.reduce((a, t) => a + t.y, 0) / s.clipboard.length
+      let dx = at ? at.x - cx : 1
+      let dy = at ? at.y - cy : 1
+      if (s.snapOn) {
+        dx = Math.round(dx * 2) / 2
+        dy = Math.round(dy * 2) / 2
+      }
+      const tables = [...s.tables]
+      const newIds: string[] = []
+      for (const src of s.clipboard) {
+        const clone: TableObj = {
+          ...src,
+          id: newTableId(),
+          layout_id: s.layoutId ?? src.layout_id,
+          // seating copies get fresh numbers; service names stay as-is
+          label: src.kind === 'seat' ? nextTableNumber(tables) : src.label,
+          x: src.x + dx,
+          y: src.y + dy,
+          locked: false,
+        }
+        tables.push(clone)
+        newIds.push(clone.id)
+      }
+      return { tables, selectedIds: newIds, selectedFixture: null, dirty: true }
+    })
+  },
 
   toggleSelection: (id) =>
     set((s) => ({

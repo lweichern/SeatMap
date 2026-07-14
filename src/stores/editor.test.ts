@@ -252,6 +252,83 @@ describe('tool escape', () => {
   })
 })
 
+describe('copy / paste', () => {
+  beforeEach(setScale)
+
+  it('pastes clones with fresh ids and fresh table numbers', () => {
+    const s = useEditor.getState()
+    s.setPlaceShape('round')
+    s.placeTable(5, 5)
+    s.placeTable(9, 5)
+    const ids = useEditor.getState().tables.map((t) => t.id)
+    s.setSelection(ids)
+    s.copySelection()
+    s.pasteClipboard()
+    const tables = useEditor.getState().tables
+    expect(tables.length).toBe(4)
+    expect(tables.map((t) => t.label)).toEqual(['1', '2', '3', '4'])
+    expect(new Set(tables.map((t) => t.id)).size).toBe(4)
+    // default paste offsets +1m,+1m and keeps relative layout
+    expect(tables[2].x).toBe(6)
+    expect(tables[3].x - tables[2].x).toBe(4)
+    // pasted copies become the selection
+    expect(useEditor.getState().selectedIds).toEqual([tables[2].id, tables[3].id])
+  })
+
+  it('pastes at a point: centroid moves there, relative layout intact', () => {
+    const s = useEditor.getState()
+    s.setPlaceShape('round')
+    s.placeTable(4, 4)
+    s.placeTable(8, 4)
+    s.setSelection(useEditor.getState().tables.map((t) => t.id))
+    s.copySelection()
+    s.pasteClipboard({ x: 20, y: 10 }) // centroid (6,4) → (20,10)
+    const pasted = useEditor.getState().tables.slice(2)
+    expect(pasted[0].x).toBe(18)
+    expect(pasted[1].x).toBe(22)
+    expect(pasted[0].y).toBe(10)
+  })
+
+  it('service copies keep their name and never take a table number', () => {
+    const s = useEditor.getState()
+    s.setPlaceShape('buffet')
+    s.placeTable(5, 5)
+    const id = useEditor.getState().tables[0].id
+    s.updateTable(id, { label: 'Buffet — Seafood' })
+    s.setSelection([id])
+    s.copySelection()
+    s.pasteClipboard()
+    const tables = useEditor.getState().tables
+    expect(tables[1].label).toBe('Buffet — Seafood')
+    expect(tables[1].seats).toBeUndefined()
+    s.setPlaceShape('round')
+    s.placeTable(15, 15)
+    expect(useEditor.getState().tables[2].label).toBe('1') // numbers untouched
+  })
+
+  it('paste is one undo step', () => {
+    const s = useEditor.getState()
+    s.setPlaceShape('round')
+    s.placeTable(5, 5)
+    s.setSelection([useEditor.getState().tables[0].id])
+    s.copySelection()
+    s.pasteClipboard()
+    s.pasteClipboard()
+    expect(useEditor.getState().tables.length).toBe(3)
+    s.undo()
+    expect(useEditor.getState().tables.length).toBe(2)
+    s.undo()
+    expect(useEditor.getState().tables.length).toBe(1)
+  })
+
+  it('paste with an empty clipboard is a no-op', () => {
+    const before = useEditor.getState().past.length
+    useEditor.getState().pasteClipboard()
+    expect(useEditor.getState().tables.length).toBe(0)
+    expect(useEditor.getState().past.length).toBe(before) // no phantom undo step
+  })
+})
+
 describe('inspector edits', () => {
   beforeEach(setScale)
 
