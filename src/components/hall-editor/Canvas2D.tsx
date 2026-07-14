@@ -655,6 +655,29 @@ export function Canvas2D({ route, unreachableIds }: Props) {
         </Layer>
       </Stage>
 
+      {/* first-run: the scale gate explained where the planner is looking */}
+      {editor.scalePxPerM === null && editor.tool !== 'calibrate' && !scalePrompt && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="pointer-events-auto max-w-sm rounded-xl border border-amber-300 bg-amber-50/95 p-5 text-center shadow-lg">
+            <p className="text-2xl">📏</p>
+            <h3 className="mt-1 text-sm font-bold text-amber-900">
+              First, calibrate the scale
+            </h3>
+            <p className="mt-1 text-xs leading-relaxed text-amber-800">
+              Upload your floor plan, then drag a line along something you know
+              the length of — a wall, a doorway. All the other tools unlock
+              after that.
+            </p>
+            <button
+              onClick={() => editor.setTool('calibrate')}
+              className="mt-3 rounded-md bg-amber-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-amber-700"
+            >
+              Calibrate scale
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* tool hints */}
       {editor.tool === 'wall' && (
         <Hint>Click each corner — double-click in place (or Enter) to close the room</Hint>
