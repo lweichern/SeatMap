@@ -257,6 +257,38 @@ export function stringPull(path: Pt[], g: Grid): Pt[] {
   return out
 }
 
+function segIntersect(p1: Pt, p2: Pt, p3: Pt, p4: Pt): Pt | null {
+  const d = (p2.x - p1.x) * (p4.y - p3.y) - (p2.y - p1.y) * (p4.x - p3.x)
+  if (Math.abs(d) < 1e-12) return null
+  const t = ((p3.x - p1.x) * (p4.y - p3.y) - (p3.y - p1.y) * (p4.x - p3.x)) / d
+  const u = ((p3.x - p1.x) * (p2.y - p1.y) - (p3.y - p1.y) * (p2.x - p1.x)) / d
+  if (t < 0 || t > 1 || u < 0 || u > 1) return null
+  return { x: p1.x + t * (p2.x - p1.x), y: p1.y + t * (p2.y - p1.y) }
+}
+
+/**
+ * Does the path physically pass THROUGH the doorway? Walls block everywhere
+ * else, so the only place a route can cross a wall's line is the door gap —
+ * being merely NEAR the door (desk just inside the hall) doesn't count.
+ */
+function crossesDoorway(raw: Pt[], venue: Venue): boolean {
+  const door = venue.door
+  if (!door) return false
+  const r = venue.door_width_m / 2 + 0.2
+  for (const w of venue.walls) {
+    for (let i = 1; i < raw.length; i++) {
+      const hit = segIntersect(
+        raw[i - 1],
+        raw[i],
+        { x: w.x1, y: w.y1 },
+        { x: w.x2, y: w.y2 },
+      )
+      if (hit && Math.hypot(hit.x - door.x, hit.y - door.y) <= r) return true
+    }
+  }
+  return false
+}
+
 function indexNearest(path: Pt[], p: Pt): number {
   let best = 0
   let bd = Infinity
@@ -298,10 +330,15 @@ export function findPath(
     // ⚠️ Pin the door before string-pulling — the smoother only tests grid
     // cells and a diagonal can slip through the one open door cell while
     // visually cutting the corner through solid wall.
+    //
+    // But ONLY when the route actually passes through the doorway. A desk
+    // placed INSIDE the hall routes straight to the table — forcing the door
+    // in unconditionally would fabricate a detour.
     let path: Pt[]
     let doorIndex = -1
-    if (venue.door && venue.registration) {
-      const doorPt: Pt = { x: venue.door.x, y: venue.door.y }
+    const doorPt: Pt | null = venue.door ? { x: venue.door.x, y: venue.door.y } : null
+    const passesDoor = doorPt !== null && crossesDoorway(raw, venue)
+    if (doorPt && passesDoor && venue.registration) {
       const di = indexNearest(raw, doorPt)
       const legA = stringPull(raw.slice(0, di + 1), grid)
       const legB = stringPull(raw.slice(di), grid)
@@ -309,7 +346,7 @@ export function findPath(
       doorIndex = legA.length - 1
     } else {
       path = stringPull(raw, grid)
-      doorIndex = venue.door ? 0 : -1
+      doorIndex = passesDoor ? 0 : -1
     }
 
     // exact start
