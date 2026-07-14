@@ -4,6 +4,95 @@ import { useEditor } from '@/stores/editor'
 import { seatsOf } from '@/lib/layout-ops'
 import { SERVICE_NAME_PRESETS } from '@/lib/types'
 
+const ROT_OPTIONS = Array.from({ length: 24 }, (_, i) => i * 15)
+
+/** Stage / registration desk properties: rotation + delete. */
+function FixtureInspector({ kind }: { kind: 'stage' | 'registration' }) {
+  const stage = useEditor((s) => s.stage)
+  const registration = useEditor((s) => s.registration)
+  const setStage = useEditor((s) => s.setStage)
+  const setRegistration = useEditor((s) => s.setRegistration)
+  const setSelectedFixture = useEditor((s) => s.setSelectedFixture)
+
+  const rot = (kind === 'stage' ? stage?.rot : registration?.rot) ?? 0
+  const input = 'mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-sm'
+
+  function setRot(deg: number) {
+    if (kind === 'stage' && stage) setStage({ ...stage, rot: deg })
+    if (kind === 'registration' && registration)
+      setRegistration({ ...registration, rot: deg })
+  }
+
+  function remove() {
+    if (kind === 'stage') setStage(null)
+    else setRegistration(null)
+    setSelectedFixture(null)
+  }
+
+  return (
+    <div className="p-3 text-sm">
+      <h3 className="font-semibold text-slate-900">
+        {kind === 'stage' ? 'Stage' : 'Registration desk'}
+      </h3>
+
+      {kind === 'stage' && stage && (
+        <div className="mt-2 flex gap-2">
+          <label className="block flex-1 text-xs text-slate-600">
+            Width (m)
+            <input
+              type="number"
+              step={0.5}
+              min={1}
+              max={30}
+              defaultValue={stage.w}
+              key={`stage-w-${stage.w}`}
+              onChange={(e) => {
+                const v = parseFloat(e.target.value)
+                if (Number.isFinite(v) && v >= 1 && v <= 30) setStage({ ...stage, w: v })
+              }}
+              className={input}
+            />
+          </label>
+          <label className="block flex-1 text-xs text-slate-600">
+            Depth (m)
+            <input
+              type="number"
+              step={0.5}
+              min={1}
+              max={20}
+              defaultValue={stage.h}
+              key={`stage-h-${stage.h}`}
+              onChange={(e) => {
+                const v = parseFloat(e.target.value)
+                if (Number.isFinite(v) && v >= 1 && v <= 20) setStage({ ...stage, h: v })
+              }}
+              className={input}
+            />
+          </label>
+        </div>
+      )}
+
+      <label className="mt-2 block text-xs text-slate-600">
+        Rotation
+        <select value={rot} onChange={(e) => setRot(Number(e.target.value))} className={input}>
+          {ROT_OPTIONS.map((deg) => (
+            <option key={deg} value={deg}>
+              {deg}°
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <button
+        onClick={remove}
+        className="mt-4 w-full rounded-md border border-red-200 py-1.5 text-sm text-red-600 hover:bg-red-50"
+      >
+        Delete
+      </button>
+    </div>
+  )
+}
+
 /**
  * Selected-object properties. ⚠️ Number fields guard against half-typed
  * values — clearing a field to retype parses to NaN and poisons geometry, so
@@ -12,10 +101,13 @@ import { SERVICE_NAME_PRESETS } from '@/lib/types'
 export function Inspector() {
   const tables = useEditor((s) => s.tables)
   const selectedIds = useEditor((s) => s.selectedIds)
+  const selectedFixture = useEditor((s) => s.selectedFixture)
   const updateTable = useEditor((s) => s.updateTable)
   const removeSelected = useEditor((s) => s.removeSelected)
 
   const t = tables.find((x) => selectedIds.includes(x.id))
+
+  if (!t && selectedFixture) return <FixtureInspector kind={selectedFixture} />
 
   if (!t) {
     const seatTables = tables.filter((x) => x.kind === 'seat')

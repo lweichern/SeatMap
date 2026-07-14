@@ -31,7 +31,7 @@ interface EditorState {
   draftWall: { x: number; y: number }[]
   door: { x: number; y: number } | null
   doorWidthM: number
-  registration: { x: number; y: number } | null
+  registration: { x: number; y: number; rot?: number } | null
   stage: Stage | null
   clearM: number
   tables: TableObj[]
@@ -44,6 +44,8 @@ interface EditorState {
   gridRows: number
   gridCols: number
   selectedIds: string[]
+  /** Stage / registration selected for the inspector (exclusive with tables). */
+  selectedFixture: 'stage' | 'registration' | null
   routeTargetId: string | null
   dirty: boolean
   past: EditorSnapshot[]
@@ -59,7 +61,7 @@ interface EditorState {
     walls: Wall[]
     door: { x: number; y: number } | null
     doorWidthM: number
-    registration: { x: number; y: number } | null
+    registration: { x: number; y: number; rot?: number } | null
     stage: Stage | null
     clearM: number
     tables: TableObj[]
@@ -84,7 +86,7 @@ interface EditorState {
   addRoomRect(x: number, y: number, w: number, h: number): void
   clearWalls(): void
   setDoor(x: number, y: number): void
-  setRegistration(p: { x: number; y: number } | null): void
+  setRegistration(p: { x: number; y: number; rot?: number } | null): void
   setStage(s: Stage | null): void
 
   placeTable(x: number, y: number): void
@@ -96,6 +98,7 @@ interface EditorState {
   removeSelected(): void
   setSelection(ids: string[]): void
   toggleSelection(id: string): void
+  setSelectedFixture(f: 'stage' | 'registration' | null): void
   setRouteTarget(id: string | null): void
 
   /** Push the current geometry onto the undo stack (call BEFORE mutating). */
@@ -165,6 +168,7 @@ const INITIAL = {
   gridRows: 3,
   gridCols: 5,
   selectedIds: [] as string[],
+  selectedFixture: null,
   routeTargetId: null,
   dirty: false,
   past: [] as EditorSnapshot[],
@@ -416,7 +420,10 @@ export const useEditor = create<EditorState>((set, get) => ({
     }))
   },
 
-  setSelection: (selectedIds) => set({ selectedIds }),
+  setSelection: (selectedIds) => set({ selectedIds, selectedFixture: null }),
+
+  setSelectedFixture: (selectedFixture) =>
+    set({ selectedFixture, selectedIds: [], routeTargetId: null }),
 
   toggleSelection: (id) =>
     set((s) => ({

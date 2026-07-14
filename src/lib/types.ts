@@ -13,6 +13,8 @@ export interface Stage {
   y: number
   w: number
   h: number
+  /** Degrees, rotation about the rect centre. */
+  rot?: number
 }
 
 export type Shape = 'round' | 'banquet' | 'square' | 'oval' | 'buffet'
@@ -110,7 +112,7 @@ export interface Venue {
   door: { x: number; y: number } | null
   door_width_m: number
   /** OUTSIDE the walls, in the foyer. Optional, never load-bearing. */
-  registration: { x: number; y: number } | null
+  registration: { x: number; y: number; rot?: number } | null
   stage: Stage | null
   /** For v2 AR. Captured now — it's one tap. */
   floorplan_north_offset_deg: number | null
