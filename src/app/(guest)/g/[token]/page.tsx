@@ -210,16 +210,27 @@ function GuestBody({
           </p>
           <ol className="mt-4 space-y-4">
             {(event.menu ?? []).map((m, i) => (
-              <li key={m.id} className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-amber-500/40 text-xs font-bold text-amber-400">
-                  {i + 1}
-                </span>
-                <div className="min-w-0">
-                  <p className="font-semibold text-slate-100">{m.name}</p>
-                  {m.description && (
-                    <p className="mt-0.5 text-sm text-slate-400">{m.description}</p>
-                  )}
+              <li key={m.id}>
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-amber-500/40 text-xs font-bold text-amber-400">
+                    {i + 1}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-slate-100">{m.name}</p>
+                    {m.description && (
+                      <p className="mt-0.5 text-sm text-slate-400">{m.description}</p>
+                    )}
+                  </div>
                 </div>
+                {m.photo && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={m.photo}
+                    alt={m.name}
+                    loading="lazy"
+                    className="mt-2 aspect-video w-full rounded-xl object-cover"
+                  />
+                )}
               </li>
             ))}
           </ol>

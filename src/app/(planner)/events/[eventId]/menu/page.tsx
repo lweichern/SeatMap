@@ -4,7 +4,56 @@ import Link from 'next/link'
 import { use, useEffect, useRef, useState } from 'react'
 import { getRepo } from '@/lib/repo'
 import { newTableId } from '@/lib/layout-ops'
+import { resizeImage } from '@/lib/photos'
 import type { MenuItem, WeddingEvent } from '@/lib/types'
+
+/** Square dish-photo control: click to upload, ✕ to clear. */
+function CoursePhoto({
+  photo,
+  onChange,
+}: {
+  photo: string | null
+  onChange: (photo: string | null) => void
+}) {
+  const fileRef = useRef<HTMLInputElement>(null)
+  return (
+    <div className="relative shrink-0">
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={async (e) => {
+          const f = e.target.files?.[0]
+          e.target.value = ''
+          // resized hard: 8 dish photos must not blow the storage budget
+          if (f) onChange(await resizeImage(f, 800))
+        }}
+      />
+      <button
+        onClick={() => fileRef.current?.click()}
+        title={photo ? 'Replace photo' : 'Add a dish photo'}
+        className="block h-16 w-16 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 text-xl text-slate-300 hover:border-slate-300"
+      >
+        {photo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={photo} alt="Dish" className="h-full w-full object-cover" />
+        ) : (
+          '🍽'
+        )}
+      </button>
+      {photo && (
+        <button
+          onClick={() => onChange(null)}
+          title="Remove photo"
+          className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 bg-white text-[10px] text-red-500 shadow-sm hover:bg-red-50"
+        >
+          ✕
+        </button>
+      )}
+    </div>
+  )
+}
 
 const COURSE_PRESETS = [
   'Cold Platter',
@@ -98,6 +147,10 @@ export default function MenuPage({
             <span className="mt-1.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white">
               {i + 1}
             </span>
+            <CoursePhoto
+              photo={m.photo ?? null}
+              onChange={(photo) => patch(m.id, { photo })}
+            />
             <div className="min-w-0 flex-1">
               <input
                 value={m.name}
