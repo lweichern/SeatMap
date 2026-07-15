@@ -25,6 +25,7 @@ const EVENT: WeddingEvent = {
   starts_at: null,
   photo_mode: 'off',
   guest_token_secret: 's',
+  menu: [],
 }
 
 function guest(id: string): Guest {
