@@ -1,6 +1,6 @@
 # SeatMap
 
-Wedding event management platform for **wedding planners**: map the hall once, reuse it per event, auto-allocate tables, QR check-in that works with zero bars, and a live photo wall. See [CLAUDE.md](CLAUDE.md) for the full product spec.
+Wedding event management platform for **wedding planners**: map the hall once, reuse it per event, auto-allocate tables, QR check-in that works with zero bars, and a live photo wall. See [CLAUDE.md](CLAUDE.md) for the full product spec — and **[docs/USER_GUIDE.md](docs/USER_GUIDE.md)** for the illustrated admin → greeter → guest walkthrough.
 
 ## Status
 
