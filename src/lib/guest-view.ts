@@ -1,5 +1,5 @@
 import { getRepo } from './repo'
-import { verifyToken } from './token'
+import { peekToken, verifyToken } from './token'
 import type { Guest, Venue, VenueTable, WeddingEvent } from './types'
 
 export interface GuestView {
@@ -10,21 +10,8 @@ export interface GuestView {
   table: VenueTable | null
 }
 
-/** Peek the event id out of a token without verifying (to find the secret). */
-function peekEventId(token: string): string | null {
-  try {
-    const payload = atob(
-      token.split('.')[0].replace(/-/g, '+').replace(/_/g, '/'),
-    )
-    const idx = payload.indexOf(':')
-    return idx > 0 ? payload.slice(0, idx) : null
-  } catch {
-    return null
-  }
-}
-
 export async function resolveGuest(token: string): Promise<GuestView | null> {
-  const eventId = peekEventId(token)
+  const eventId = peekToken(token)?.event_id ?? null
   if (!eventId) return null
   const repo = getRepo()
   const event = await repo.getEvent(eventId)

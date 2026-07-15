@@ -12,6 +12,7 @@ import {
   exportPdfSheet,
   exportPngZip,
 } from '@/lib/qr-export'
+import { signToken } from '@/lib/token'
 import type { Guest, GuestConstraint, GuestSide, WeddingEvent } from '@/lib/types'
 
 type SideFilter = 'all' | GuestSide
@@ -32,6 +33,7 @@ export default function GuestsPage({
   const [importing, setImporting] = useState(false)
   const [newGuest, setNewGuest] = useState(EMPTY_NEW)
   const [exporting, setExporting] = useState<'' | 'pdf' | 'zip'>('')
+  const [inviteNote, setInviteNote] = useState('')
 
   const refresh = useCallback(async () => {
     const repo = getRepo()
@@ -118,6 +120,39 @@ export default function GuestsPage({
     }
   }
 
+  async function rsvpUrl(): Promise<string | null> {
+    if (!event) return null
+    const token = await signToken(event.id, 'rsvp', event.guest_token_secret)
+    return `${window.location.origin}/rsvp/${token}`
+  }
+
+  async function copyInviteLink() {
+    const url = await rsvpUrl()
+    if (!url) return
+    try {
+      await navigator.clipboard.writeText(url)
+      setInviteNote('Invitation link copied — share it anywhere ✓')
+      setTimeout(() => setInviteNote(''), 4000)
+    } catch {
+      // clipboard blocked (permissions/embedded browser) — show it instead
+      setInviteNote(url)
+    }
+  }
+
+  async function downloadInviteQr() {
+    const url = await rsvpUrl()
+    if (!url || !event) return
+    const QRCode = await import('qrcode')
+    const dataUrl = await QRCode.toDataURL(url, { width: 800, margin: 2 })
+    const a = document.createElement('a')
+    a.href = dataUrl
+    a.download = `rsvp-${event.couple_names.replace(/\s+/g, '-').toLowerCase()}.png`
+    a.click()
+  }
+
+  const rsvpYes = guests.filter((g) => g.rsvp === 'yes').length
+  const rsvpNo = guests.filter((g) => g.rsvp === 'no').length
+
   const input = 'rounded border border-slate-300 px-2 py-1 text-xs w-full'
 
   return (
@@ -129,8 +164,30 @@ export default function GuestsPage({
         <h1 className="text-xl font-bold text-slate-900">{event?.couple_names}</h1>
         <span className="text-sm text-slate-400">
           {guests.length} guests · {totalPax} pax
+          {(rsvpYes > 0 || rsvpNo > 0) && (
+            <>
+              {' · '}
+              <span className="text-emerald-600">{rsvpYes} accepted</span>
+              {' · '}
+              <span className="text-red-500">{rsvpNo} declined</span>
+            </>
+          )}
         </span>
         <div className="ml-auto flex gap-2">
+          <button
+            onClick={copyInviteLink}
+            className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm text-emerald-700 hover:bg-emerald-100"
+            title="One public link for everyone — RSVPs land on this list automatically"
+          >
+            Invite link
+          </button>
+          <button
+            onClick={downloadInviteQr}
+            className="rounded-md border border-emerald-200 px-3 py-1.5 text-sm text-emerald-700 hover:bg-emerald-50"
+            title="The same invitation as a QR image"
+          >
+            Invite QR
+          </button>
           <button
             onClick={() => setImporting(true)}
             className="rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50"
@@ -161,6 +218,10 @@ export default function GuestsPage({
           </Link>
         </div>
       </div>
+
+      {inviteNote && (
+        <p className="mt-2 text-sm text-emerald-600">{inviteNote}</p>
+      )}
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <input
@@ -206,11 +267,21 @@ export default function GuestsPage({
               {filtered.map((g) => (
                 <tr key={g.id} className="border-b border-slate-50 hover:bg-slate-50/50">
                   <td className="px-3 py-1.5">
-                    <input
-                      value={g.name}
-                      onChange={(e) => patch(g.id, { name: e.target.value })}
-                      className={input}
-                    />
+                    <div className="flex items-center gap-1.5">
+                      {g.rsvp && (
+                        <span
+                          title={g.rsvp === 'yes' ? 'RSVP: accepted' : 'RSVP: declined'}
+                          className={`h-2 w-2 shrink-0 rounded-full ${
+                            g.rsvp === 'yes' ? 'bg-emerald-500' : 'bg-red-400'
+                          }`}
+                        />
+                      )}
+                      <input
+                        value={g.name}
+                        onChange={(e) => patch(g.id, { name: e.target.value })}
+                        className={input}
+                      />
+                    </div>
                   </td>
                   <td className="px-3 py-1.5">
                     <input

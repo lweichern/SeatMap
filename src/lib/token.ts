@@ -71,6 +71,19 @@ export async function verifyToken(
   return { event_id: payload.slice(0, idx), guest_id: payload.slice(idx + 1) }
 }
 
+/**
+ * Decode a token's payload WITHOUT verifying it — for looking up which
+ * event's secret to verify against. Never trust the result on its own.
+ */
+export function peekToken(token: string): TokenPayload | null {
+  const payloadBytes = b64urlDecode(token.split('.')[0] ?? '')
+  if (!payloadBytes) return null
+  const payload = new TextDecoder().decode(payloadBytes)
+  const idx = payload.indexOf(':')
+  if (idx <= 0) return null
+  return { event_id: payload.slice(0, idx), guest_id: payload.slice(idx + 1) }
+}
+
 /** The URL a guest QR encodes. */
 export function guestUrl(origin: string, token: string): string {
   return `${origin}/g/${token}`
