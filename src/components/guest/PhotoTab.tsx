@@ -14,6 +14,7 @@ interface Props {
 export function PhotoTab({ eventId, guestId, photoMode }: Props) {
   const [feed, setFeed] = useState<Photo[]>([])
   const [busy, setBusy] = useState(false)
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const [note, setNote] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -41,16 +42,29 @@ export function PhotoTab({ eventId, guestId, photoMode }: Props) {
     if (files.length === 0) return
     setBusy(true)
     setNote('')
-    try {
-      for (const f of files) await uploadPhoto(eventId, guestId, f)
-      setNote(files.length > 1 ? `${files.length} photos shared 🎉` : 'Photo shared 🎉')
-      refresh()
-    } catch (err) {
-      console.error(err)
-      setNote("Couldn't upload right now — we'll keep trying, or retry in a moment.")
-    } finally {
-      setBusy(false)
+    setProgress({ done: 0, total: files.length })
+    let ok = 0
+    for (const f of files) {
+      try {
+        await uploadPhoto(eventId, guestId, f)
+        ok++
+      } catch (err) {
+        console.error('upload failed for one photo', err)
+      }
+      setProgress({ done: ok, total: files.length })
+      refresh() // each photo appears in the feed as soon as it lands
     }
+    setProgress(null)
+    setNote(
+      ok === files.length
+        ? ok > 1
+          ? `${ok} photos shared 🎉`
+          : 'Photo shared 🎉'
+        : ok > 0
+          ? `${ok} of ${files.length} shared — a few didn't make it, try those again.`
+          : "Couldn't upload right now — please try again in a moment.",
+    )
+    setBusy(false)
   }
 
   return (
@@ -68,8 +82,17 @@ export function PhotoTab({ eventId, guestId, photoMode }: Props) {
         disabled={busy}
         className="mx-auto mt-4 block w-full max-w-md rounded-full bg-amber-500 py-3.5 text-base font-bold text-slate-900 disabled:opacity-50"
       >
-        {busy ? 'Uploading…' : '📸 Share a photo'}
+        {busy
+          ? progress && progress.total > 1
+            ? `Uploading ${Math.min(progress.done + 1, progress.total)} of ${progress.total}…`
+            : 'Uploading…'
+          : '📸 Share photos'}
       </button>
+      {!busy && !note && (
+        <p className="mt-2 text-center text-xs text-slate-500">
+          You can select several at once
+        </p>
+      )}
       {note && <p className="mt-2 text-center text-sm text-slate-400">{note}</p>}
 
       <div className="mx-auto mt-6 grid max-w-md grid-cols-3 gap-1.5">
