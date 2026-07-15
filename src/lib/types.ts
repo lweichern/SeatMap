@@ -162,6 +162,8 @@ export interface Guest {
   checked_in_at: string | null
   /** Pinned by the planner — excluded from re-allocation. Client-side only. */
   locked: boolean
+  /** Self-registration answer; null = added by the planner / not asked. */
+  rsvp?: 'yes' | 'no' | null
 }
 
 export type ConstraintType = 'must_sit_together' | 'must_not_sit_together'

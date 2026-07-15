@@ -44,7 +44,8 @@ export default function AllocatePage({
     setEvent(e)
     setVenue(v)
     setTables(l?.tables ?? [])
-    setGuests(gs)
+    // declined RSVPs never reach the seating board
+    setGuests(gs.filter((g) => g.rsvp !== 'no'))
     setConstraints(cs)
   }, [eventId])
 
