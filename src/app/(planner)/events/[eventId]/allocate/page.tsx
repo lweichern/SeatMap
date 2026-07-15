@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getRepo } from '@/lib/repo'
 import { allocate, type AllocationResult } from '@/lib/allocate'
+import { AllocateMap } from '@/components/allocate/AllocateMap'
+import { seatsOf } from '@/lib/layout-ops'
 import type {
   Guest,
   GuestConstraint,
@@ -26,6 +28,7 @@ export default function AllocatePage({
   const [result, setResult] = useState<AllocationResult | null>(null)
   const [running, setRunning] = useState(false)
   const [dragId, setDragId] = useState<string | null>(null)
+  const [selectedTableId, setSelectedTableId] = useState<string | null>(null)
   const workerRef = useRef<Worker | null>(null)
 
   const load = useCallback(async () => {
@@ -120,15 +123,16 @@ export default function AllocatePage({
     await persist(updated)
   }
 
-  const sortedTables = useMemo(
-    () =>
-      [...tables].sort((a, b) =>
-        a.label.localeCompare(b.label, undefined, { numeric: true }),
-      ),
-    [tables],
-  )
-
   const unassigned = byTable.get(null) ?? []
+  const paxByTable = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const [tid, gs] of byTable) {
+      if (tid) m.set(tid, gs.reduce((s, g) => s + g.party_size, 0))
+    }
+    return m
+  }, [byTable])
+  const selectedTable = tables.find((t) => t.id === selectedTableId) ?? null
+  const selectedPax = selectedTableId ? (paxByTable.get(selectedTableId) ?? 0) : 0
   const seatedPax = guests
     .filter((g) => g.table_id)
     .reduce((s, g) => s + g.party_size, 0)
@@ -246,7 +250,7 @@ export default function AllocatePage({
         </div>
       )}
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-[280px_1fr]">
+      <div className="mt-6 grid gap-4 lg:grid-cols-[260px_1fr_290px]">
         <DropZone
           tableId={null}
           className="h-fit rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-3"
@@ -262,39 +266,69 @@ export default function AllocatePage({
               <p className="text-xs text-slate-400">Everyone is seated 🎉</p>
             )}
           </div>
+          <p className="mt-3 text-[10px] leading-snug text-slate-400">
+            Drag a guest onto a table on the map — or onto this box to
+            unassign them.
+          </p>
         </DropZone>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {sortedTables.map((t) => {
-            const seated = byTable.get(t.id) ?? []
-            const pax = seated.reduce((s, g) => s + g.party_size, 0)
-            const over = pax > (t.seats ?? 0)
-            return (
+        {/* the map IS the floor plan the hall editor drew */}
+        <div className="h-[68vh] min-h-96 overflow-hidden rounded-lg border border-slate-200 bg-white">
+          {venue ? (
+            <AllocateMap
+              venue={venue}
+              tables={tables}
+              paxByTable={paxByTable}
+              selectedId={selectedTableId}
+              onSelect={setSelectedTableId}
+              onDropGuest={(guestId, tableId) => {
+                moveGuest(guestId, tableId)
+                setSelectedTableId(tableId)
+              }}
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm text-slate-400">
+              Loading floor plan…
+            </div>
+          )}
+        </div>
+
+        <div className="h-fit rounded-lg border border-slate-200 bg-white p-3">
+          {selectedTable ? (
+            <>
+              <div className="flex items-baseline justify-between">
+                <h3 className="font-semibold text-slate-900">
+                  Table {selectedTable.label}
+                </h3>
+                <span
+                  className={`text-xs font-medium ${
+                    selectedPax > seatsOf(selectedTable) ? 'text-red-600' : 'text-slate-400'
+                  }`}
+                >
+                  {selectedPax}/{seatsOf(selectedTable)} seats
+                </span>
+              </div>
               <DropZone
-                key={t.id}
-                tableId={t.id}
-                className={`rounded-lg border bg-white p-3 ${
-                  over ? 'border-red-300 ring-1 ring-red-200' : 'border-slate-200'
-                }`}
+                tableId={selectedTable.id}
+                className="mt-2 flex min-h-16 flex-wrap content-start gap-1.5 rounded-md border border-dashed border-slate-200 p-2"
               >
-                <div className="flex items-baseline justify-between">
-                  <h3 className="font-semibold text-slate-900">Table {t.label}</h3>
-                  <span
-                    className={`text-xs font-medium ${
-                      over ? 'text-red-600' : 'text-slate-400'
-                    }`}
-                  >
-                    {pax}/{t.seats ?? 0}
-                  </span>
-                </div>
-                <div className="mt-2 flex min-h-8 flex-wrap gap-1.5">
-                  {seated.map((g) => (
-                    <Chip key={g.id} g={g} />
-                  ))}
-                </div>
+                {(byTable.get(selectedTable.id) ?? []).map((g) => (
+                  <Chip key={g.id} g={g} />
+                ))}
+                {(byTable.get(selectedTable.id) ?? []).length === 0 && (
+                  <p className="text-xs text-slate-400">
+                    Empty — drop guests here or on the map.
+                  </p>
+                )}
               </DropZone>
-            )
-          })}
+            </>
+          ) : (
+            <p className="text-xs leading-relaxed text-slate-400">
+              Click a table on the map to see who&apos;s seated there. Colours:
+              white = empty, blue = partially filled, green = full, red = over
+              capacity.
+            </p>
+          )}
         </div>
       </div>
     </div>
