@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo, useRef, useState } from 'react'
 import { halfExtent } from '@/lib/table-geometry'
 import { seatsOf } from '@/lib/layout-ops'
 import type { TableObj, Venue } from '@/lib/types'
@@ -28,29 +29,144 @@ export function AllocateMap({
   onDropGuest,
 }: Props) {
   // bounds from everything visible
-  const xs: number[] = []
-  const ys: number[] = []
-  for (const w of venue.walls) xs.push(w.x1, w.x2), ys.push(w.y1, w.y2)
-  for (const t of tables) xs.push(t.x), ys.push(t.y)
-  if (venue.registration) xs.push(venue.registration.x), ys.push(venue.registration.y)
-  if (venue.stage) {
-    xs.push(venue.stage.x, venue.stage.x + venue.stage.w)
-    ys.push(venue.stage.y, venue.stage.y + venue.stage.h)
+  const bounds = useMemo(() => {
+    const xs: number[] = []
+    const ys: number[] = []
+    for (const w of venue.walls) xs.push(w.x1, w.x2), ys.push(w.y1, w.y2)
+    for (const t of tables) xs.push(t.x), ys.push(t.y)
+    if (venue.registration) xs.push(venue.registration.x), ys.push(venue.registration.y)
+    if (venue.stage) {
+      xs.push(venue.stage.x, venue.stage.x + venue.stage.w)
+      ys.push(venue.stage.y, venue.stage.y + venue.stage.h)
+    }
+    if (xs.length === 0) xs.push(0, 30), ys.push(0, 20)
+    const pad = 2.5
+    const minX = Math.min(...xs) - pad
+    const minY = Math.min(...ys) - pad
+    return {
+      x: minX,
+      y: minY,
+      w: Math.max(...xs) + pad - minX,
+      h: Math.max(...ys) + pad - minY,
+    }
+  }, [venue, tables])
+
+  // pan/zoom via the viewBox; null = fitted to bounds
+  const [view, setView] = useState<{ x: number; y: number; w: number; h: number } | null>(null)
+  const vb = view ?? bounds
+  const svgRef = useRef<SVGSVGElement>(null)
+  const panRef = useRef<{ px: number; py: number; moved: boolean } | null>(null)
+  const suppressClickRef = useRef(false)
+
+  /** Convert a client point to map metres. */
+  const toMap = (clientX: number, clientY: number) => {
+    const r = svgRef.current!.getBoundingClientRect()
+    return {
+      x: vb.x + ((clientX - r.left) / r.width) * vb.w,
+      y: vb.y + ((clientY - r.top) / r.height) * vb.h,
+    }
   }
-  if (xs.length === 0) xs.push(0, 30), ys.push(0, 20)
-  const pad = 2.5
-  const minX = Math.min(...xs) - pad
-  const minY = Math.min(...ys) - pad
-  const w = Math.max(...xs) + pad - minX
-  const h = Math.max(...ys) + pad - minY
+
+  const zoomAt = (clientX: number, clientY: number, factor: number) => {
+    const pt = toMap(clientX, clientY)
+    setView((prev) => {
+      const cur = prev ?? bounds
+      const w = Math.min(bounds.w * 1.5, Math.max(bounds.w / 10, cur.w * factor))
+      const scale = w / cur.w
+      const h = cur.h * scale
+      return {
+        x: pt.x - (pt.x - cur.x) * scale,
+        y: pt.y - (pt.y - cur.y) * scale,
+        w,
+        h,
+      }
+    })
+  }
+
+  const zoomCentre = (factor: number) => {
+    const r = svgRef.current?.getBoundingClientRect()
+    if (r) zoomAt(r.left + r.width / 2, r.top + r.height / 2, factor)
+  }
 
   return (
+    <div className="relative h-full w-full">
+      <div className="absolute right-2 top-2 z-10 flex flex-col gap-1">
+        {(
+          [
+            ['+', () => zoomCentre(0.75), 'Zoom in'],
+            ['−', () => zoomCentre(1.33), 'Zoom out'],
+            ['⤢', () => setView(null), 'Fit to room'],
+          ] as const
+        ).map(([label, fn, title]) => (
+          <button
+            key={label}
+            onClick={fn}
+            title={title}
+            className="h-7 w-7 rounded-md border border-slate-200 bg-white text-sm text-slate-600 shadow-sm hover:bg-slate-50"
+          >
+            {label}
+          </button>
+        ))}
+      </div>
     <svg
-      viewBox={`${minX} ${minY} ${w} ${h}`}
-      className="h-full w-full"
+      ref={svgRef}
+      viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`}
+      className="h-full w-full touch-none"
       role="img"
       aria-label="Seating map"
-      onClick={() => onSelect(null)}
+      onWheel={(e) => {
+        // same gestures as the hall editor: scroll pans, ⌘/Ctrl+scroll zooms
+        if (e.ctrlKey || e.metaKey) {
+          zoomAt(e.clientX, e.clientY, e.deltaY > 0 ? 1.08 : 0.92)
+        } else {
+          const r = svgRef.current!.getBoundingClientRect()
+          setView((prev) => {
+            const cur = prev ?? bounds
+            return {
+              ...cur,
+              x: cur.x + (e.deltaX / r.width) * cur.w,
+              y: cur.y + (e.deltaY / r.height) * cur.h,
+            }
+          })
+        }
+      }}
+      onPointerDown={(e) => {
+        if (e.button !== 0) return
+        panRef.current = { px: e.clientX, py: e.clientY, moved: false }
+        ;(e.target as Element).setPointerCapture?.(e.pointerId)
+      }}
+      onPointerMove={(e) => {
+        const pan = panRef.current
+        if (!pan) return
+        const dx = e.clientX - pan.px
+        const dy = e.clientY - pan.py
+        if (!pan.moved && Math.hypot(dx, dy) < 4) return
+        pan.moved = true
+        const r = svgRef.current!.getBoundingClientRect()
+        setView((prev) => {
+          const cur = prev ?? bounds
+          return {
+            ...cur,
+            x: cur.x - (dx / r.width) * cur.w,
+            y: cur.y - (dy / r.height) * cur.h,
+          }
+        })
+        pan.px = e.clientX
+        pan.py = e.clientY
+      }}
+      onPointerUp={() => {
+        // a real pan must not fall through as a deselect click
+        const moved = panRef.current?.moved
+        panRef.current = null
+        if (moved) suppressClickRef.current = true
+      }}
+      onClick={() => {
+        if (suppressClickRef.current) {
+          suppressClickRef.current = false
+          return
+        }
+        onSelect(null)
+      }}
     >
       {/* walls with the door gap */}
       {venue.walls.map((wall, i) => (
@@ -140,6 +256,7 @@ export function AllocateMap({
         />
       ))}
     </svg>
+    </div>
   )
 }
 
