@@ -137,7 +137,15 @@ export default function AllocatePage({
     return (
       <span
         draggable
-        onDragStart={() => setDragId(g.id)}
+        onDragStart={(e) => {
+          // carry the id in the drag payload so the drop never depends on state
+          e.dataTransfer.setData('text/plain', g.id)
+          e.dataTransfer.effectAllowed = 'move'
+          // ⚠️ defer the ghost-style re-render: mutating the dragged element
+          // during dragstart makes Chrome CANCEL the drag (the "first drag
+          // does nothing, second works" bug)
+          setTimeout(() => setDragId(g.id), 0)
+        }}
         onDragEnd={() => setDragId(null)}
         className={`inline-flex cursor-grab items-center gap-1 rounded-full border px-2 py-0.5 text-xs ${
           g.locked
@@ -171,10 +179,14 @@ export default function AllocatePage({
   }) {
     return (
       <div
-        onDragOver={(e) => e.preventDefault()}
+        onDragOver={(e) => {
+          e.preventDefault()
+          e.dataTransfer.dropEffect = 'move'
+        }}
         onDrop={(e) => {
           e.preventDefault()
-          if (dragId) moveGuest(dragId, tableId)
+          const id = e.dataTransfer.getData('text/plain') || dragId
+          if (id) moveGuest(id, tableId)
           setDragId(null)
         }}
         className={className}
