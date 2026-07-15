@@ -157,66 +157,74 @@ export default function GuestsPage({
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-6">
-      <div className="flex items-center gap-3">
-        <Link href="/events" className="text-sm text-slate-400 hover:text-slate-700">
+      {/* row 1: identity + stats */}
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <Link
+          href="/events"
+          className="whitespace-nowrap text-sm text-slate-400 hover:text-slate-700"
+        >
           ← Events
         </Link>
-        <h1 className="text-xl font-bold text-slate-900">{event?.couple_names}</h1>
-        <span className="text-sm text-slate-400">
+        <h1 className="whitespace-nowrap text-xl font-bold text-slate-900">
+          {event?.couple_names}
+        </h1>
+        <span className="whitespace-nowrap text-sm text-slate-400">
           {guests.length} guests · {totalPax} pax
-          {(rsvpYes > 0 || rsvpNo > 0) && (
-            <>
-              {' · '}
-              <span className="text-emerald-600">{rsvpYes} accepted</span>
-              {' · '}
-              <span className="text-red-500">{rsvpNo} declined</span>
-            </>
-          )}
         </span>
-        <div className="ml-auto flex gap-2">
-          <button
-            onClick={copyInviteLink}
-            className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm text-emerald-700 hover:bg-emerald-100"
-            title="One public link for everyone — RSVPs land on this list automatically"
-          >
-            Invite link
-          </button>
-          <button
-            onClick={downloadInviteQr}
-            className="rounded-md border border-emerald-200 px-3 py-1.5 text-sm text-emerald-700 hover:bg-emerald-50"
-            title="The same invitation as a QR image"
-          >
-            Invite QR
-          </button>
-          <button
-            onClick={() => setImporting(true)}
-            className="rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50"
-          >
-            Import CSV/Excel
-          </button>
-          <button
-            onClick={() => exportQr('pdf')}
-            disabled={exporting !== '' || guests.length === 0}
-            className="rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50 disabled:opacity-40"
-            title="A4 sheet of QR cards with cut lines"
-          >
-            {exporting === 'pdf' ? 'Generating…' : 'QR PDF sheet'}
-          </button>
-          <button
-            onClick={() => exportQr('zip')}
-            disabled={exporting !== '' || guests.length === 0}
-            className="rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50 disabled:opacity-40"
-            title="One PNG per guest, named after them"
-          >
-            {exporting === 'zip' ? 'Generating…' : 'QR PNG zip'}
-          </button>
-          <Link
-            href={`/events/${eventId}/allocate`}
-            className="rounded-md bg-slate-900 px-3 py-1.5 text-sm text-white hover:bg-slate-700"
-          >
-            Seating →
-          </Link>
-        </div>
+        {(rsvpYes > 0 || rsvpNo > 0) && (
+          <span className="whitespace-nowrap text-sm">
+            <span className="text-emerald-600">{rsvpYes} accepted</span>
+            <span className="text-slate-300"> · </span>
+            <span className="text-red-500">{rsvpNo} declined</span>
+          </span>
+        )}
+      </div>
+
+      {/* row 2: toolbar — buttons never wrap internally */}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          onClick={copyInviteLink}
+          className="whitespace-nowrap rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm text-emerald-700 hover:bg-emerald-100"
+          title="One public link for everyone — RSVPs land on this list automatically"
+        >
+          Invite link
+        </button>
+        <button
+          onClick={downloadInviteQr}
+          className="whitespace-nowrap rounded-md border border-emerald-200 px-3 py-1.5 text-sm text-emerald-700 hover:bg-emerald-50"
+          title="The same invitation as a QR image"
+        >
+          Invite QR
+        </button>
+        <span className="mx-1 hidden h-6 w-px bg-slate-200 sm:block" />
+        <button
+          onClick={() => setImporting(true)}
+          className="whitespace-nowrap rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50"
+        >
+          Import CSV/Excel
+        </button>
+        <button
+          onClick={() => exportQr('pdf')}
+          disabled={exporting !== '' || guests.length === 0}
+          className="whitespace-nowrap rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50 disabled:opacity-40"
+          title="A4 sheet of QR cards with cut lines"
+        >
+          {exporting === 'pdf' ? 'Generating…' : 'QR PDF sheet'}
+        </button>
+        <button
+          onClick={() => exportQr('zip')}
+          disabled={exporting !== '' || guests.length === 0}
+          className="whitespace-nowrap rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50 disabled:opacity-40"
+          title="One PNG per guest, named after them"
+        >
+          {exporting === 'zip' ? 'Generating…' : 'QR PNG zip'}
+        </button>
+        <Link
+          href={`/events/${eventId}/allocate`}
+          className="ml-auto whitespace-nowrap rounded-md border border-slate-900 bg-slate-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-slate-700"
+        >
+          Seating →
+        </Link>
       </div>
 
       {inviteNote && (
