@@ -127,6 +127,8 @@ export interface MenuItem {
   id: string
   name: string
   description: string
+  /** Dish photo — data URL in local mode; storage path in Supabase mode. */
+  photo?: string | null
 }
 
 export interface WeddingEvent {
