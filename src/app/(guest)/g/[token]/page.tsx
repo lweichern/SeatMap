@@ -51,7 +51,7 @@ export default function GuestPage({
   const search = useSearchParams()
   const [view, setView] = useState<GuestView | null | 'loading'>('loading')
   const [use3d, setUse3d] = useState(false)
-  const [tab, setTab] = useState<'map' | 'photos'>('map')
+  const [tab, setTab] = useState<'map' | 'menu' | 'photos'>('map')
 
   useEffect(() => {
     resolveGuest(token).then(setView)
@@ -111,8 +111,8 @@ function GuestBody({
   tables: GuestView['tables']
   table: GuestView['table']
   use3d: boolean
-  tab: 'map' | 'photos'
-  setTab: (t: 'map' | 'photos') => void
+  tab: 'map' | 'menu' | 'photos'
+  setTab: (t: 'map' | 'menu' | 'photos') => void
 }) {
   // walking route: desk → door → table, same solver the editor uses
   const route = useMemo(
@@ -172,7 +172,13 @@ function GuestBody({
       </header>
 
       <div className="mx-auto mt-6 flex w-full max-w-md gap-2 px-6">
-        {(['map', 'photos'] as const).map((t) => (
+        {(
+          [
+            ['map', 'Find my table'],
+            ...(event.menu && event.menu.length > 0 ? [['menu', 'Menu']] : []),
+            ['photos', 'Photos'],
+          ] as ['map' | 'menu' | 'photos', string][]
+        ).map(([t, label]) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -180,7 +186,7 @@ function GuestBody({
               tab === t ? 'bg-amber-500 text-slate-900' : 'bg-slate-800 text-slate-300'
             }`}
           >
-            {t === 'map' ? 'Find my table' : 'Photos'}
+            {label}
           </button>
         ))}
       </div>
@@ -194,6 +200,32 @@ function GuestBody({
           ) : (
             <Hall2D {...hallProps} />
           )}
+        </div>
+      )}
+
+      {tab === 'menu' && (
+        <div className="mx-auto mt-6 w-full max-w-md px-6 pb-10">
+          <p className="text-center text-xs uppercase tracking-widest text-slate-500">
+            Tonight&apos;s menu
+          </p>
+          <ol className="mt-4 space-y-4">
+            {(event.menu ?? []).map((m, i) => (
+              <li key={m.id} className="flex items-start gap-3">
+                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-amber-500/40 text-xs font-bold text-amber-400">
+                  {i + 1}
+                </span>
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-100">{m.name}</p>
+                  {m.description && (
+                    <p className="mt-0.5 text-sm text-slate-400">{m.description}</p>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ol>
+          <p className="mt-8 text-center text-xs text-slate-600">
+            {(event.menu ?? []).length} courses · served in this order
+          </p>
         </div>
       )}
 

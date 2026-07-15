@@ -122,6 +122,13 @@ export interface Venue {
 
 export type PhotoMode = 'live_feed' | 'moderated_only' | 'off'
 
+/** One course of the dinner. Array order = serving order. */
+export interface MenuItem {
+  id: string
+  name: string
+  description: string
+}
+
 export interface WeddingEvent {
   id: string
   org_id: string
@@ -132,6 +139,8 @@ export interface WeddingEvent {
   starts_at: string | null
   photo_mode: PhotoMode
   guest_token_secret: string
+  /** Courses served that night, in order. */
+  menu: MenuItem[]
 }
 
 export type GuestSide = 'bride' | 'groom' | 'both'

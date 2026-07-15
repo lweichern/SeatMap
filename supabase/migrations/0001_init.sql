@@ -88,6 +88,7 @@ create table events (
   photo_mode text not null default 'moderated_only'
     check (photo_mode in ('live_feed', 'moderated_only', 'off')),
   guest_token_secret uuid not null default gen_random_uuid(),
+  menu jsonb not null default '[]'::jsonb,          -- [{id,name,description}] serving order
   created_at timestamptz not null default now()
 );
 

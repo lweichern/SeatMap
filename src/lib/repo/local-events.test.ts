@@ -26,6 +26,7 @@ function event(over: Partial<WeddingEvent> = {}): WeddingEvent {
     starts_at: null,
     photo_mode: 'moderated_only',
     guest_token_secret: 'secret-uuid',
+    menu: [],
     ...over,
   }
 }

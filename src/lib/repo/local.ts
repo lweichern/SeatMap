@@ -48,6 +48,7 @@ function migrateHallEditorV2(db: Db) {
     v.floorplan_north_offset_deg ??= null
     v.clear_m ??= 0.25
   }
+  for (const e of db.events) e.menu ??= []
   for (const t of db.tables as (Db['tables'][number] & {
     diameter_m?: number
     w_m?: number

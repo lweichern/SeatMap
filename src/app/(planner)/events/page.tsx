@@ -55,6 +55,7 @@ export default function EventsPage() {
       starts_at: null,
       photo_mode: "moderated_only",
       guest_token_secret: newTableId(),
+      menu: [],
     });
     router.push(`/events/${id}/guests`);
   }
@@ -154,6 +155,12 @@ export default function EventsPage() {
                 className="rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50"
               >
                 Photos
+              </button>
+              <button
+                onClick={() => router.push(`/events/${e.id}/menu`)}
+                className="rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50"
+              >
+                Menu
               </button>
               <button
                 onClick={async () => {
