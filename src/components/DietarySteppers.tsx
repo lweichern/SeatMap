@@ -70,6 +70,8 @@ export function DietarySteppers({
         value={value.allergy ?? ''}
         onChange={(e) => onChange({ ...value, allergy: e.target.value })}
         placeholder="Allergies? e.g. peanut — for the kitchen"
+        aria-label="Allergy note"
+        maxLength={120}
         className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${t.input}`}
       />
     </div>

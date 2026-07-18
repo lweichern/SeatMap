@@ -76,6 +76,12 @@ export default function GuestsPage({
     await getRepo().saveGuest(updated)
   }
 
+  /** Normalize the raw in-progress dietary edits once, when the popover closes. */
+  const closeDiet = (g: Guest) => {
+    patch(g.id, { dietary: normalizeDietary(g.dietary) ?? null })
+    setDietFor(null)
+  }
+
   async function addManual() {
     const name = newGuest.name.trim()
     if (!name) return
@@ -329,7 +335,7 @@ export default function GuestsPage({
                   <td className="px-3 py-1.5">
                     <button
                       onClick={(e) => {
-                        if (dietFor?.id === g.id) return setDietFor(null)
+                        if (dietFor?.id === g.id) return closeDiet(g)
                         const r = e.currentTarget.getBoundingClientRect()
                         setDietFor({
                           id: g.id,
@@ -340,8 +346,20 @@ export default function GuestsPage({
                       title={g.dietary?.allergy ? `Allergy: ${g.dietary.allergy}` : 'Edit dietary needs'}
                       className="w-full rounded-md border border-transparent px-1.5 py-1 text-left text-xs hover:border-slate-200 hover:bg-slate-50"
                     >
-                      {summarizeDietary(g.dietary) || <span className="text-slate-300">—</span>}
+                      {summarizeDietary(g.dietary, g.party_size) || (
+                        <span className="text-slate-300">—</span>
+                      )}
                       {g.dietary?.allergy && <span className="ml-1 text-red-500">•</span>}
+                      {(['veg', 'halal', 'no_beef', 'child'] as const).some(
+                        (k) => (g.dietary?.[k] ?? 0) > g.party_size,
+                      ) && (
+                        <span
+                          className="ml-1 text-amber-500"
+                          title="Counts exceed party size — party may have shrunk"
+                        >
+                          !
+                        </span>
+                      )}
                     </button>
                     {dietFor?.id === g.id && (
                       <div
@@ -353,7 +371,7 @@ export default function GuestsPage({
                             Dietary needs · {g.party_size} pax
                           </p>
                           <button
-                            onClick={() => setDietFor(null)}
+                            onClick={() => closeDiet(g)}
                             className="text-xs text-slate-400 hover:text-slate-600"
                           >
                             Done
@@ -362,7 +380,7 @@ export default function GuestsPage({
                         <DietarySteppers
                           value={g.dietary ?? {}}
                           max={g.party_size}
-                          onChange={(d) => patch(g.id, { dietary: normalizeDietary(d) ?? null })}
+                          onChange={(d) => patch(g.id, { dietary: d })}
                           tone="light"
                         />
                       </div>

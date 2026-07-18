@@ -21,7 +21,7 @@ export function normalizeDietary(d: Dietary | null | undefined): Dietary | undef
     if (n > 0) out[k] = n
   }
   const allergy = (d.allergy ?? '').trim()
-  if (allergy) out.allergy = allergy
+  if (allergy) out.allergy = allergy.slice(0, 120)
   return Object.keys(out).length > 0 ? out : undefined
 }
 
@@ -30,11 +30,13 @@ export function clampedCount(g: Guest, key: DietaryCountKey): number {
   return Math.min(g.dietary?.[key] ?? 0, g.party_size)
 }
 
-/** Compact chips text for list rows, e.g. "🌱2 · ☪️1". Empty string when none. */
-export function summarizeDietary(d: Dietary | null | undefined): string {
+/** Compact chips text for list rows, e.g. "🌱2 · ☪️1". Empty string when none.
+ *  When `max` is given, each displayed count is clamped to it (still hidden
+ *  when the raw count is 0). */
+export function summarizeDietary(d: Dietary | null | undefined, max?: number): string {
   if (!d) return ''
   return DIETARY_CATEGORIES.filter((c) => (d[c.key] ?? 0) > 0)
-    .map((c) => `${c.emoji}${d[c.key]}`)
+    .map((c) => `${c.emoji}${max !== undefined ? Math.min(d[c.key]!, max) : d[c.key]}`)
     .join(' · ')
 }
 

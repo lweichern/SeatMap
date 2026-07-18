@@ -46,6 +46,12 @@ describe('normalizeDietary', () => {
     expect(normalizeDietary({ veg: 2, halal: 0, allergy: '' })).toEqual({ veg: 2 })
     expect(normalizeDietary({ allergy: ' peanut ' })).toEqual({ allergy: 'peanut' })
   })
+
+  it('truncates an over-long allergy note to 120 chars', () => {
+    const long = 'a'.repeat(200)
+    const out = normalizeDietary({ allergy: long })
+    expect(out?.allergy).toHaveLength(120)
+  })
 })
 
 describe('clampedCount', () => {
@@ -61,6 +67,10 @@ describe('summarizeDietary', () => {
     expect(summarizeDietary({ veg: 2, child: 1 })).toBe('🌱2 · 🧒1')
     expect(summarizeDietary({})).toBe('')
     expect(summarizeDietary(undefined)).toBe('')
+  })
+
+  it('clamps displayed counts to max when given, still hiding zero counts', () => {
+    expect(summarizeDietary({ veg: 5 }, 2)).toBe('🌱2')
   })
 })
 

@@ -86,4 +86,9 @@ describe('mergeRsvp dietary', () => {
     const kept = mergeRsvp([existing], { ...base }, 'e1')
     expect(kept.dietary).toEqual({ veg: 1 })
   })
+
+  it('clamps dietary counts to party_size when a guest lowers the party picker', () => {
+    const g = mergeRsvp([], { ...base, party_size: 2, dietary: { veg: 5 } }, 'e1')
+    expect(g.dietary).toEqual({ veg: 2 })
+  })
 })
