@@ -1,5 +1,6 @@
 import { newTableId } from './layout-ops'
-import type { Guest, GuestSide } from './types'
+import { normalizeDietary } from './kitchen'
+import type { Dietary, Guest, GuestSide } from './types'
 
 export interface RsvpSubmission {
   name: string
@@ -7,6 +8,7 @@ export interface RsvpSubmission {
   party_size: number
   side: GuestSide
   attending: boolean
+  dietary?: Dietary
 }
 
 const digits = (s: string | null | undefined) => (s ?? '').replace(/\D/g, '')
@@ -41,6 +43,7 @@ export function mergeRsvp(
       party_size: sub.party_size,
       phone: match.phone ?? (subPhone ? sub.phone.trim() : null),
       side: match.side === 'both' ? sub.side : match.side,
+      dietary: normalizeDietary(sub.dietary) ?? match.dietary,
     }
   }
 
@@ -59,5 +62,6 @@ export function mergeRsvp(
     checked_in_at: null,
     locked: false,
     rsvp,
+    dietary: normalizeDietary(sub.dietary),
   }
 }
