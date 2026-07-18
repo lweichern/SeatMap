@@ -5,6 +5,7 @@ import { use, useEffect, useRef, useState } from 'react'
 import { getRepo } from '@/lib/repo'
 import { newTableId } from '@/lib/layout-ops'
 import { resizeImage } from '@/lib/photos'
+import { drawPlaceholder } from '@/lib/demo'
 import type { MenuItem, WeddingEvent } from '@/lib/types'
 
 /** Square dish-photo control: click to upload, ✕ to clear. */
@@ -55,15 +56,15 @@ function CoursePhoto({
   )
 }
 
-const COURSE_PRESETS = [
-  'Cold Platter',
-  'Soup',
-  'Roast Chicken',
-  'Steamed Fish',
-  'Prawns',
-  'Braised Mushroom & Vegetables',
-  'Fried Rice',
-  'Dessert',
+const COURSE_PRESETS: [name: string, desc: string, color: string, label: string][] = [
+  ['Five Happiness Cold Platter', '五福拼盘', '#9f1239', 'COLD PLATTER'],
+  ['Double-boiled Chicken Soup', '炖鸡汤', '#b45309', 'SOUP'],
+  ['Crispy Roast Chicken', '脆皮烧鸡', '#c2410c', 'CHICKEN'],
+  ['Steamed Grouper', '清蒸石斑 · light soy & scallions', '#0e7490', 'FISH'],
+  ['Butter Prawns', '奶油虾', '#ca8a04', 'PRAWNS'],
+  ['Braised Mushroom & Seasonal Greens', '香菇时蔬', '#15803d', 'GREENS'],
+  ['Golden Fried Rice', '黄金炒饭', '#a16207', 'FRIED RICE'],
+  ['Chilled Longan & Sea Coconut', '龙眼海底椰', '#7c3aed', 'DESSERT'],
 ]
 
 /**
@@ -206,10 +207,11 @@ export default function MenuPage({
             onClick={() =>
               commit({
                 ...event,
-                menu: COURSE_PRESETS.map((name) => ({
+                menu: COURSE_PRESETS.map(([name, description, color, label]) => ({
                   id: newTableId(),
                   name,
-                  description: '',
+                  description,
+                  photo: drawPlaceholder(color, label),
                 })),
               })
             }
