@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 import { getGreeterDb } from '@/lib/greeter-db'
-import { startSyncLoop } from '@/lib/greeter-sync'
+import { flushOutbox, startSyncLoop } from '@/lib/greeter-sync'
 import { Scanner } from '@/components/greeter/Scanner'
 import type { Guest, VenueTable } from '@/lib/types'
 
@@ -26,6 +26,15 @@ export default function CheckinPage() {
   const refreshStatus = useCallback(async () => {
     setStatus(await getGreeterDb().status())
   }, [])
+
+  // don't wait for the 30s loop — push each action up as soon as it happens
+  const syncSoon = useCallback(() => {
+    setTimeout(() => {
+      flushOutbox()
+        .then(refreshStatus)
+        .catch(() => {}) // offline — the loop retries later
+    }, 400)
+  }, [refreshStatus])
 
   useEffect(() => {
     refreshStatus()
@@ -59,6 +68,7 @@ export default function CheckinPage() {
       const guest = (await db.getGuest(hit.guest.id))!
       setResult({ kind: 'ok', guest, table: hit.table, already })
       refreshStatus()
+    syncSoon()
     },
     [refreshStatus],
   )
@@ -76,12 +86,14 @@ export default function CheckinPage() {
     setHits([])
     setTab('scan')
     refreshStatus()
+    syncSoon()
   }
 
   async function undo(guestId: string) {
     await getGreeterDb().undoCheckIn(guestId, new Date().toISOString())
     setResult(null)
     refreshStatus()
+    syncSoon()
   }
 
   async function submitWalkin() {
@@ -93,6 +105,7 @@ export default function CheckinPage() {
     setResult({ kind: 'ok', guest, table, already: false })
     setTab('scan')
     refreshStatus()
+    syncSoon()
   }
 
   const tabBtn = (t: Tab, label: string) => (

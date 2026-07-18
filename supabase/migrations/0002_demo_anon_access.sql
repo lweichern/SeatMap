@@ -11,3 +11,7 @@ begin
     execute format('create policy demo_anon_all on %I for all to anon using (true) with check (true)', t);
   end loop;
 end $$;
+
+-- the pre-auth app stamps everything with this org id
+insert into organizations (id, name) values ('local-org', 'Demo Organization')
+on conflict (id) do nothing;
