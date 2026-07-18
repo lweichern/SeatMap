@@ -37,6 +37,7 @@ export default function GuestsPage({
   const [newGuest, setNewGuest] = useState(EMPTY_NEW)
   const [exporting, setExporting] = useState<'' | 'pdf' | 'zip'>('')
   const [inviteNote, setInviteNote] = useState('')
+  const [menu, setMenu] = useState<'' | 'invite' | 'io'>('')
   const [dietFor, setDietFor] = useState<{ id: string; top: number; left: number } | null>(null)
 
   const refresh = useCallback(async () => {
@@ -190,45 +191,76 @@ export default function GuestsPage({
         )}
       </div>
 
-      {/* row 2: toolbar — buttons never wrap internally */}
+      {/* row 2: toolbar — three entries, one job each */}
+      {menu && <div className="fixed inset-0 z-10" onClick={() => setMenu('')} />}
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <button
-          onClick={copyInviteLink}
-          className="whitespace-nowrap rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm text-emerald-700 hover:bg-emerald-100"
-          title="One public link for everyone — RSVPs land on this list automatically"
-        >
-          Invite link
-        </button>
-        <button
-          onClick={downloadInviteQr}
-          className="whitespace-nowrap rounded-md border border-emerald-200 px-3 py-1.5 text-sm text-emerald-700 hover:bg-emerald-50"
-          title="The same invitation as a QR image"
-        >
-          Invite QR
-        </button>
-        <span className="mx-1 hidden h-6 w-px bg-slate-200 sm:block" />
-        <button
-          onClick={() => setImporting(true)}
-          className="whitespace-nowrap rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50"
-        >
-          Import CSV/Excel
-        </button>
-        <button
-          onClick={() => exportQr('pdf')}
-          disabled={exporting !== '' || guests.length === 0}
-          className="whitespace-nowrap rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50 disabled:opacity-40"
-          title="A4 sheet of QR cards with cut lines"
-        >
-          {exporting === 'pdf' ? 'Generating…' : 'QR PDF sheet'}
-        </button>
-        <button
-          onClick={() => exportQr('zip')}
-          disabled={exporting !== '' || guests.length === 0}
-          className="whitespace-nowrap rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50 disabled:opacity-40"
-          title="One PNG per guest, named after them"
-        >
-          {exporting === 'zip' ? 'Generating…' : 'QR PNG zip'}
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setMenu(menu === 'invite' ? '' : 'invite')}
+            className="whitespace-nowrap rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm text-emerald-700 hover:bg-emerald-100"
+          >
+            Invite guests ▾
+          </button>
+          {menu === 'invite' && (
+            <div className="absolute left-0 top-full z-20 mt-1 w-64 rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
+              <MenuItem
+                label="Copy invite link"
+                hint="One public link — RSVPs land on this list automatically"
+                onClick={() => {
+                  setMenu('')
+                  copyInviteLink()
+                }}
+              />
+              <MenuItem
+                label="Download invite QR"
+                hint="The same invitation as a QR image"
+                onClick={() => {
+                  setMenu('')
+                  downloadInviteQr()
+                }}
+              />
+            </div>
+          )}
+        </div>
+        <div className="relative">
+          <button
+            onClick={() => setMenu(menu === 'io' ? '' : 'io')}
+            disabled={exporting !== ''}
+            className="whitespace-nowrap rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50 disabled:opacity-40"
+          >
+            {exporting !== '' ? 'Generating…' : 'Import / Export ▾'}
+          </button>
+          {menu === 'io' && (
+            <div className="absolute left-0 top-full z-20 mt-1 w-64 rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
+              <MenuItem
+                label="Import CSV/Excel"
+                hint="Bring an existing guest list in"
+                onClick={() => {
+                  setMenu('')
+                  setImporting(true)
+                }}
+              />
+              <MenuItem
+                label="QR PDF sheet"
+                hint="A4 sheet of QR cards with cut lines"
+                disabled={guests.length === 0}
+                onClick={() => {
+                  setMenu('')
+                  exportQr('pdf')
+                }}
+              />
+              <MenuItem
+                label="QR PNG zip"
+                hint="One PNG per guest, named after them"
+                disabled={guests.length === 0}
+                onClick={() => {
+                  setMenu('')
+                  exportQr('zip')
+                }}
+              />
+            </div>
+          )}
+        </div>
         <Link
           href={`/events/${eventId}/allocate`}
           className="ml-auto whitespace-nowrap rounded-md border border-slate-900 bg-slate-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-slate-700"
@@ -268,12 +300,12 @@ export default function GuestsPage({
         </label>
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_320px]">
+      <div className="mt-4">
         <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400">
               <tr>
-                <th className="px-3 py-2">Name</th>
+                <th className="min-w-48 px-3 py-2">Name</th>
                 <th className="px-3 py-2 w-20">Pax</th>
                 <th className="px-3 py-2 w-28">Side</th>
                 <th className="px-3 py-2 w-36">Group</th>
@@ -447,19 +479,35 @@ export default function GuestsPage({
           )}
         </div>
 
-        <ConstraintsPanel
-          eventId={eventId}
-          guests={guests}
-          constraints={constraints}
-          onAdd={async (c) => {
-            await getRepo().saveConstraint(c)
-            refresh()
-          }}
-          onRemove={async (id) => {
-            await getRepo().deleteConstraint(id)
-            refresh()
-          }}
-        />
+        <details
+          className="mt-4 rounded-lg border border-slate-200 bg-white"
+          open={constraints.length > 0}
+        >
+          <summary className="cursor-pointer select-none px-4 py-3 text-sm font-semibold text-slate-900">
+            Seating rules
+            {constraints.length > 0 && (
+              <span className="ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                {constraints.length}
+              </span>
+            )}
+            <span className="ml-2 text-xs font-normal text-slate-400">
+              hard constraints the allocator will never break
+            </span>
+          </summary>
+          <ConstraintsPanel
+            eventId={eventId}
+            guests={guests}
+            constraints={constraints}
+            onAdd={async (c) => {
+              await getRepo().saveConstraint(c)
+              refresh()
+            }}
+            onRemove={async (id) => {
+              await getRepo().deleteConstraint(id)
+              refresh()
+            }}
+          />
+        </details>
       </div>
 
       {importing && (
@@ -473,5 +521,28 @@ export default function GuestsPage({
         />
       )}
     </div>
+  )
+}
+
+function MenuItem({
+  label,
+  hint,
+  onClick,
+  disabled,
+}: {
+  label: string
+  hint: string
+  onClick: () => void
+  disabled?: boolean
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="block w-full rounded-md px-3 py-2 text-left hover:bg-slate-50 disabled:opacity-40"
+    >
+      <span className="block text-sm text-slate-800">{label}</span>
+      <span className="block text-xs text-slate-400">{hint}</span>
+    </button>
   )
 }
