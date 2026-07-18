@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { getRepo } from '@/lib/repo'
 import { newTableId } from '@/lib/layout-ops'
 import type { Venue, VenueTableLayout } from '@/lib/types'
+import { DemoButton } from '@/components/DemoButton'
 
 const LOCAL_ORG = 'local-org'
 
@@ -65,7 +66,10 @@ export default function VenuesPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-8">
-      <h1 className="text-2xl font-bold text-slate-900">Venue library</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-slate-900">Venue library</h1>
+        <DemoButton />
+      </div>
       <p className="mt-1 text-sm text-slate-500">
         Map a hall once, reuse it for every event there.
       </p>

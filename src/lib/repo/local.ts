@@ -286,4 +286,10 @@ export class LocalVenueRepo implements VenueRepo {
       this.write(db)
     }
   }
+
+  async deletePhoto(id: string): Promise<void> {
+    const db = this.read()
+    db.photos = db.photos.filter((p) => p.id !== id)
+    this.write(db)
+  }
 }

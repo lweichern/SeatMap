@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { getRepo } from "@/lib/repo";
 import { newTableId } from "@/lib/layout-ops";
 import type { Venue, VenueTableLayout, WeddingEvent } from "@/lib/types";
+import { DemoButton } from "@/components/DemoButton";
 
 export default function EventsPage() {
   const router = useRouter();
@@ -65,7 +66,10 @@ export default function EventsPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-8">
-      <h1 className="text-2xl font-bold text-slate-900">Events</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-slate-900">Events</h1>
+        <DemoButton />
+      </div>
       <p className="mt-1 text-sm text-slate-500">
         One wedding = one event, on a venue layout from your library.
       </p>
