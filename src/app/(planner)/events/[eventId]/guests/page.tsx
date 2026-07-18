@@ -37,7 +37,7 @@ export default function GuestsPage({
   const [newGuest, setNewGuest] = useState(EMPTY_NEW)
   const [exporting, setExporting] = useState<'' | 'pdf' | 'zip'>('')
   const [inviteNote, setInviteNote] = useState('')
-  const [dietFor, setDietFor] = useState<string | null>(null)
+  const [dietFor, setDietFor] = useState<{ id: string; top: number; left: number } | null>(null)
 
   const refresh = useCallback(async () => {
     const repo = getRepo()
@@ -326,17 +326,28 @@ export default function GuestsPage({
                       className={input}
                     />
                   </td>
-                  <td className="relative px-3 py-1.5">
+                  <td className="px-3 py-1.5">
                     <button
-                      onClick={() => setDietFor(dietFor === g.id ? null : g.id)}
+                      onClick={(e) => {
+                        if (dietFor?.id === g.id) return setDietFor(null)
+                        const r = e.currentTarget.getBoundingClientRect()
+                        setDietFor({
+                          id: g.id,
+                          top: r.bottom + 4,
+                          left: Math.max(8, Math.min(r.right - 288, window.innerWidth - 296)),
+                        })
+                      }}
                       title={g.dietary?.allergy ? `Allergy: ${g.dietary.allergy}` : 'Edit dietary needs'}
                       className="w-full rounded-md border border-transparent px-1.5 py-1 text-left text-xs hover:border-slate-200 hover:bg-slate-50"
                     >
                       {summarizeDietary(g.dietary) || <span className="text-slate-300">—</span>}
                       {g.dietary?.allergy && <span className="ml-1 text-red-500">•</span>}
                     </button>
-                    {dietFor === g.id && (
-                      <div className="absolute right-0 top-full z-20 mt-1 w-72 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+                    {dietFor?.id === g.id && (
+                      <div
+                        className="fixed z-30 w-72 rounded-xl border border-slate-200 bg-white p-3 shadow-xl"
+                        style={{ top: dietFor.top, left: dietFor.left }}
+                      >
                         <div className="mb-2 flex items-center justify-between">
                           <p className="text-xs font-semibold text-slate-500">
                             Dietary needs · {g.party_size} pax
