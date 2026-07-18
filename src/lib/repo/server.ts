@@ -42,8 +42,13 @@ async function fetchStore(): Promise<{ ok: boolean; raw: string | null }> {
   }
 }
 
-async function putStore(body: string): Promise<void> {
-  await fetch('/api/store', { method: 'PUT', body })
+async function putStore(body: string): Promise<boolean> {
+  try {
+    const res = await fetch('/api/store', { method: 'PUT', body })
+    return res.ok
+  } catch {
+    return false
+  }
 }
 
 let migrated = false
@@ -68,8 +73,8 @@ export function createServerRepo(): VenueRepo {
     const fn = (local as unknown as Record<string, (...a: unknown[]) => Promise<unknown>>)[method]
     const result = await fn.apply(local, args)
     if (snap.dirty && snap.value !== null) {
-      if (store.ok) await putStore(snap.value)
-      else localStorage.setItem(KEY, snap.value)
+      const saved = store.ok ? await putStore(snap.value) : false
+      if (!saved) localStorage.setItem(KEY, snap.value) // never lose a write
     }
     return result
   }
