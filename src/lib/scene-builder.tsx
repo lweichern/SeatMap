@@ -161,12 +161,12 @@ function StageMesh({ stage }: { stage: Stage }) {
     >
       <mesh position={[0, 0.3, 0]}>
         <boxGeometry args={[stage.w, 0.6, stage.h]} />
-        <meshStandardMaterial color="#6d28d9" />
+        <meshStandardMaterial color="#5b2144" />
       </mesh>
       <LabelSprite
         text="STAGE"
         pos={[0, 2.2, 0]}
-        style={{ fontPx: 44, fg: '#ede9fe', bg: 'rgba(76,29,149,0.85)' }}
+        style={{ fontPx: 44, fg: '#f3dce9', bg: 'rgba(64,22,48,0.85)' }}
         height={0.5}
       />
     </group>

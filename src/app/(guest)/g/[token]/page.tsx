@@ -13,8 +13,8 @@ import type { HallSceneProps } from '@/lib/scene-builder'
 const GuestHall3D = dynamic(() => import('@/components/guest/GuestHall3D'), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full items-center justify-center text-sm text-slate-500">
-      Loading map…
+    <div className="flex h-full items-center justify-center bg-[#14100a] text-sm text-[#d9c48e]">
+      Setting the scene…
     </div>
   ),
 })
@@ -42,6 +42,8 @@ function webglAvailable(): boolean {
   }
 }
 
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV']
+
 export default function GuestPage({
   params,
 }: {
@@ -50,18 +52,25 @@ export default function GuestPage({
   const { token } = use(params)
   const search = useSearchParams()
   const [view, setView] = useState<GuestView | null | 'loading'>('loading')
-  const [use3d, setUse3d] = useState(false)
+  const [webgl, setWebgl] = useState(false)
+  const [pref3d, setPref3d] = useState(true)
   const [tab, setTab] = useState<'map' | 'menu' | 'photos'>('map')
 
   useEffect(() => {
     resolveGuest(token).then(setView)
-    setUse3d(webglAvailable() && search.get('2d') !== '1')
+    setWebgl(webglAvailable())
+    setPref3d(search.get('2d') !== '1')
   }, [token, search])
 
   if (view === 'loading') {
     return (
       <Shell>
-        <p className="mt-24 text-center text-slate-400">Finding your seat…</p>
+        <div className="gv-rise pt-36 text-center">
+          <Flourish className="mx-auto" />
+          <p className="gv-display mt-5 text-2xl italic text-(--ink-soft)">
+            Finding your seat…
+          </p>
+        </div>
       </Shell>
     )
   }
@@ -69,10 +78,11 @@ export default function GuestPage({
   if (!view) {
     return (
       <Shell>
-        <div className="mt-20 px-6 text-center">
-          <p className="text-2xl font-bold text-slate-100">Hmm, that link isn&apos;t working</p>
-          <p className="mt-3 text-slate-400">
-            This QR code isn&apos;t valid. Please see the greeter at the entrance —
+        <div className="gv-rise mx-auto mt-28 max-w-sm px-6 text-center">
+          <Flourish className="mx-auto" />
+          <p className="gv-display mt-5 text-3xl italic">This link isn&apos;t quite right</p>
+          <p className="mt-3 text-[15px] leading-relaxed text-(--ink-soft)">
+            The QR code couldn&apos;t be read. Please see the greeter at the entrance —
             they&apos;ll find your table in seconds.
           </p>
         </div>
@@ -88,7 +98,9 @@ export default function GuestPage({
       venue={venue}
       tables={tables}
       table={table}
-      use3d={use3d}
+      use3d={webgl && pref3d}
+      webgl={webgl}
+      setPref3d={setPref3d}
       tab={tab}
       setTab={setTab}
     />
@@ -102,6 +114,8 @@ function GuestBody({
   tables,
   table,
   use3d,
+  webgl,
+  setPref3d,
   tab,
   setTab,
 }: {
@@ -111,6 +125,8 @@ function GuestBody({
   tables: GuestView['tables']
   table: GuestView['table']
   use3d: boolean
+  webgl: boolean
+  setPref3d: (v: boolean) => void
   tab: 'map' | 'menu' | 'photos'
   setTab: (t: 'map' | 'menu' | 'photos') => void
 }) {
@@ -147,31 +163,50 @@ function GuestBody({
 
   return (
     <Shell>
-      <header className="px-6 pt-8 text-center">
-        <p className="text-sm uppercase tracking-widest text-slate-400">
-          {event.couple_names}
+      <header className="px-6 pt-10 text-center">
+        <p className="gv-caps gv-rise text-[11px] text-(--gold)">
+          The wedding celebration of
         </p>
-        <p className="mt-1 text-lg text-slate-300">Welcome, {guest.name}</p>
+        <h1
+          className="gv-display gv-rise mt-2 text-4xl italic sm:text-5xl"
+          style={{ animationDelay: '.08s' }}
+        >
+          {event.couple_names}
+        </h1>
+        <Flourish className="gv-rise mx-auto mt-4" delay=".16s" />
+        <p
+          className="gv-rise mt-4 text-[15px] text-(--ink-soft)"
+          style={{ animationDelay: '.24s' }}
+        >
+          Welcome, <span className="font-semibold text-(--ink)">{guest.name}</span>
+        </p>
         {table ? (
-          <>
-            <p className="mt-4 text-[17vw] font-black leading-none tracking-tight text-amber-400 sm:text-8xl">
-              TABLE {table.label}
+          <div className="gv-rise" style={{ animationDelay: '.32s' }}>
+            <p className="gv-caps mt-5 text-[11px] text-(--ink-faint)">Your table</p>
+            <p className="gv-tablenum leading-none">{table.label}</p>
+            <p className="mt-2 text-[15px] text-(--ink-soft)">
+              {describeTablePosition(table, venue)}
             </p>
-            <p className="mt-3 text-slate-300">{describeTablePosition(table, venue)}</p>
             {guest.party_size > 1 && (
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-(--ink-faint)">
                 {guest.party_size} seats reserved for your party
               </p>
             )}
-          </>
+          </div>
         ) : (
-          <p className="mt-6 text-2xl font-bold text-slate-100">
+          <p
+            className="gv-display gv-rise mt-8 text-2xl italic"
+            style={{ animationDelay: '.32s' }}
+          >
             Please see the greeter for your table
           </p>
         )}
       </header>
 
-      <div className="mx-auto mt-6 flex w-full max-w-md gap-2 px-6">
+      <nav
+        className="gv-rise mx-auto mt-8 flex max-w-md items-end justify-center gap-9 border-b border-(--line) px-6"
+        style={{ animationDelay: '.42s' }}
+      >
         {(
           [
             ['map', 'Find my table'],
@@ -182,62 +217,108 @@ function GuestBody({
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`flex-1 rounded-full py-2 text-sm font-semibold ${
-              tab === t ? 'bg-amber-500 text-slate-900' : 'bg-slate-800 text-slate-300'
+            className={`gv-caps relative pb-3 text-[11px] transition-colors ${
+              tab === t ? 'text-(--ink)' : 'text-(--ink-faint)'
             }`}
           >
             {label}
+            <span
+              className={`absolute inset-x-0 -bottom-px mx-auto h-[2px] w-9 rounded-full bg-(--gold) transition-opacity duration-300 ${
+                tab === t ? 'opacity-100' : 'opacity-0'
+              }`}
+            />
           </button>
         ))}
-      </div>
+      </nav>
 
       {tab === 'map' && (
-        <div className="mx-auto mt-4 h-[62vh] w-full max-w-3xl overflow-hidden rounded-t-2xl px-2">
-          {use3d ? (
-            <MapErrorBoundary fallback={<Hall2D {...hallProps} />}>
-              <GuestHall3D {...sceneProps} />
-            </MapErrorBoundary>
-          ) : (
-            <Hall2D {...hallProps} />
+        <section className="gv-rise mx-auto mt-6 w-full max-w-3xl px-3" style={{ animationDelay: '.5s' }}>
+          <div className="overflow-hidden rounded-3xl border border-(--line) bg-[#14100a] shadow-[0_24px_60px_-24px_rgba(90,66,20,.45)]">
+            <div className="flex items-center justify-between border-b border-(--line) bg-(--card) px-4 py-2.5">
+              <p className="gv-caps text-[10px] text-(--ink-soft)">Ballroom map</p>
+              <div className="flex items-center gap-3">
+                <span className="inline-flex items-center gap-1.5 text-[11px] text-(--ink-faint)">
+                  <span className="h-2 w-2 rounded-full bg-[#f6c14d] shadow-[0_0_6px_#f6c14d]" />
+                  Your table
+                </span>
+                {webgl && (
+                  <div className="flex overflow-hidden rounded-full border border-(--line) text-[11px] font-semibold">
+                    <button
+                      onClick={() => setPref3d(true)}
+                      className={`px-3 py-1 transition-colors ${
+                        use3d
+                          ? 'bg-(--gold) text-(--card)'
+                          : 'text-(--ink-faint)'
+                      }`}
+                    >
+                      3D
+                    </button>
+                    <button
+                      onClick={() => setPref3d(false)}
+                      className={`px-3 py-1 transition-colors ${
+                        !use3d
+                          ? 'bg-(--gold) text-(--card)'
+                          : 'text-(--ink-faint)'
+                      }`}
+                    >
+                      2D
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="h-[58vh] min-h-[380px]">
+              {use3d ? (
+                <MapErrorBoundary fallback={<Hall2D {...hallProps} />}>
+                  <GuestHall3D {...sceneProps} />
+                </MapErrorBoundary>
+              ) : (
+                <Hall2D {...hallProps} />
+              )}
+            </div>
+          </div>
+          {route && (
+            <p className="mt-3 text-center text-[13px] text-(--ink-faint)">
+              The glowing dots trace your walk from the entrance to your table.
+            </p>
           )}
-        </div>
+        </section>
       )}
 
       {tab === 'menu' && (
-        <div className="mx-auto mt-6 w-full max-w-md px-6 pb-10">
-          <p className="text-center text-xs uppercase tracking-widest text-slate-500">
-            Tonight&apos;s menu
+        <section className="mx-auto mt-8 w-full max-w-md px-6 pb-12">
+          <p className="gv-caps gv-rise text-center text-[11px] text-(--gold)">
+            This evening&apos;s menu
           </p>
-          <ol className="mt-4 space-y-4">
+          <ol className="mt-7 space-y-8">
             {(event.menu ?? []).map((m, i) => (
-              <li key={m.id}>
-                <div className="flex items-start gap-3">
-                  <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-amber-500/40 text-xs font-bold text-amber-400">
-                    {i + 1}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="font-semibold text-slate-100">{m.name}</p>
-                    {m.description && (
-                      <p className="mt-0.5 text-sm text-slate-400">{m.description}</p>
-                    )}
-                  </div>
-                </div>
+              <li key={m.id} className="gv-rise text-center" style={{ animationDelay: `${0.08 + i * 0.06}s` }}>
+                <p className="gv-display text-base text-(--gold)">
+                  {ROMAN[i] ?? i + 1}
+                </p>
+                <p className="gv-display mt-1 text-[22px] font-semibold leading-snug">{m.name}</p>
+                {m.description && (
+                  <p className="mt-1 text-sm leading-relaxed text-(--ink-soft)">
+                    {m.description}
+                  </p>
+                )}
                 {m.photo && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={m.photo}
                     alt={m.name}
                     loading="lazy"
-                    className="mt-2 aspect-video w-full rounded-xl object-cover"
+                    className="mt-3 aspect-video w-full rounded-2xl border border-(--line) object-cover shadow-[0_14px_30px_-18px_rgba(90,66,20,.4)]"
                   />
                 )}
               </li>
             ))}
           </ol>
-          <p className="mt-8 text-center text-xs text-slate-600">
+          <Flourish className="mx-auto mt-10" />
+          <p className="gv-caps mt-3 text-center text-[10px] text-(--ink-faint)">
             {(event.menu ?? []).length} courses · served in this order
           </p>
-        </div>
+        </section>
       )}
 
       {tab === 'photos' && (
@@ -247,6 +328,32 @@ function GuestBody({
   )
 }
 
+function Flourish({ className, delay }: { className?: string; delay?: string }) {
+  return (
+    <svg
+      width="132"
+      height="10"
+      viewBox="0 0 132 10"
+      className={className}
+      style={delay ? { animationDelay: delay } : undefined}
+      aria-hidden
+    >
+      <line x1="0" y1="5" x2="54" y2="5" stroke="var(--gold-soft)" strokeWidth="1" />
+      <rect
+        x="62"
+        y="1"
+        width="8"
+        height="8"
+        transform="rotate(45 66 5)"
+        fill="none"
+        stroke="var(--gold)"
+        strokeWidth="1"
+      />
+      <line x1="78" y1="5" x2="132" y2="5" stroke="var(--gold-soft)" strokeWidth="1" />
+    </svg>
+  )
+}
+
 function Shell({ children }: { children: ReactNode }) {
-  return <div className="min-h-screen bg-slate-900 pb-6">{children}</div>
+  return <div className="gv-shell pb-12">{children}</div>
 }

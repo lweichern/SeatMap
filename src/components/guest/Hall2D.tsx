@@ -32,8 +32,8 @@ export function Hall2D(props: HallViewProps) {
       role="img"
       aria-label="Hall map"
     >
-      <rect x={-pad} y={-pad} width={w + pad * 2} height={h + pad * 2} fill="#0f172a" />
-      <rect x={0} y={0} width={w} height={h} rx={0.5} fill="#1e293b" />
+      <rect x={-pad} y={-pad} width={w + pad * 2} height={h + pad * 2} fill="#14100a" />
+      <rect x={0} y={0} width={w} height={h} rx={0.5} fill="#241b10" />
 
       {props.walls.map((wall, i) => (
         <WallWithGap key={i} wall={wall} door={props.door} doorWidthM={props.doorWidthM} />
@@ -48,14 +48,14 @@ export function Hall2D(props: HallViewProps) {
             y={props.stage.y}
             width={props.stage.w}
             height={props.stage.h}
-            fill="#7c3aed"
+            fill="#5b2144"
             opacity={0.85}
             rx={0.3}
           />
           <text
             x={props.stage.x + props.stage.w / 2}
             y={props.stage.y + props.stage.h / 2}
-            fill="#ddd6fe"
+            fill="#e8c6d8"
             fontSize={Math.min(props.stage.h * 0.5, 1.2)}
             textAnchor="middle"
             dominantBaseline="central"
@@ -70,7 +70,7 @@ export function Hall2D(props: HallViewProps) {
         <polyline
           points={props.route.map((p) => `${p.x},${p.y}`).join(' ')}
           fill="none"
-          stroke={props.routeOk === false ? '#ef4444' : '#34d399'}
+          stroke={props.routeOk === false ? '#ef4444' : '#e0b64e'}
           strokeWidth={0.28}
           strokeDasharray="0.7 0.4"
           strokeLinecap="round"
@@ -92,7 +92,7 @@ export function Hall2D(props: HallViewProps) {
             fontWeight="bold"
             textAnchor="middle"
           >
-            DOOR
+            ENTRANCE
           </text>
         </g>
       )}
@@ -135,7 +135,7 @@ function WallWithGap({
   door: { x: number; y: number } | null
   doorWidthM: number
 }) {
-  const stroke = { stroke: '#64748b', strokeWidth: 0.35, strokeLinecap: 'round' as const }
+  const stroke = { stroke: '#8a7350', strokeWidth: 0.35, strokeLinecap: 'round' as const }
   if (!door) return <line x1={wall.x1} y1={wall.y1} x2={wall.x2} y2={wall.y2} {...stroke} />
 
   // project the door onto this segment; if it lands on it, split the line
@@ -166,8 +166,8 @@ function WallWithGap({
 }
 
 function TableGlyph({ t, isGuest }: { t: TableObj; isGuest: boolean }) {
-  const fill = isGuest ? '#fbbf24' : t.kind === 'service' ? '#92400e' : '#475569'
-  const textFill = isGuest ? '#78350f' : '#e2e8f0'
+  const fill = isGuest ? '#f6c14d' : t.kind === 'service' ? '#8a5a24' : '#4a3b28'
+  const textFill = isGuest ? '#4a3106' : '#ead9b6'
   const label = t.kind === 'service' ? t.label.split('—')[0].trim() : t.label
   const r = (t.dia ?? 1.8) / 2
 
@@ -188,7 +188,7 @@ function TableGlyph({ t, isGuest }: { t: TableObj; isGuest: boolean }) {
         )}
       </g>
       {isGuest && (
-        <circle r={Math.max(r, (t.len ?? 1.8) / 2) + 0.5} fill="none" stroke="#f59e0b" strokeWidth={0.2}>
+        <circle r={Math.max(r, (t.len ?? 1.8) / 2) + 0.5} fill="none" stroke="#f6c14d" strokeWidth={0.2}>
           <animate attributeName="opacity" values="0.9;0.3;0.9" dur="1.6s" repeatCount="indefinite" />
         </circle>
       )}
