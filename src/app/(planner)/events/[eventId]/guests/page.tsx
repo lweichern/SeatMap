@@ -13,6 +13,7 @@ import {
   exportPngZip,
 } from '@/lib/qr-export'
 import { signToken } from '@/lib/token'
+import { getShareOrigin } from '@/lib/share-origin'
 import type { Guest, GuestConstraint, GuestSide, WeddingEvent } from '@/lib/types'
 
 type SideFilter = 'all' | GuestSide
@@ -105,7 +106,7 @@ export default function GuestsPage({
         await getRepo().saveGuests(fresh)
         setGuests(withTokens)
       }
-      const origin = window.location.origin
+      const origin = await getShareOrigin()
       const slug = event.couple_names.replace(/\s+/g, '-').toLowerCase()
       if (kind === 'pdf') {
         downloadBlob(
@@ -123,7 +124,7 @@ export default function GuestsPage({
   async function rsvpUrl(): Promise<string | null> {
     if (!event) return null
     const token = await signToken(event.id, 'rsvp', event.guest_token_secret)
-    return `${window.location.origin}/rsvp/${token}`
+    return `${await getShareOrigin()}/rsvp/${token}`
   }
 
   async function copyInviteLink() {
