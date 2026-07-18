@@ -4,7 +4,8 @@ import { use, useEffect, useState } from 'react'
 import { getRepo } from '@/lib/repo'
 import { peekToken, verifyToken } from '@/lib/token'
 import { mergeRsvp } from '@/lib/rsvp'
-import type { GuestSide, Venue, WeddingEvent } from '@/lib/types'
+import { DietarySteppers } from '@/components/DietarySteppers'
+import type { Dietary, GuestSide, Venue, WeddingEvent } from '@/lib/types'
 
 /**
  * Public e-invitation: the planner blasts ONE link to everyone; each
@@ -25,7 +26,9 @@ export default function RsvpPage({
     party: 1,
     side: 'both' as GuestSide,
     attending: true,
+    dietary: {} as Dietary,
   })
+  const [showDietary, setShowDietary] = useState(false)
   const [done, setDone] = useState<null | 'yes' | 'no'>(null)
   const [busy, setBusy] = useState(false)
 
@@ -60,6 +63,7 @@ export default function RsvpPage({
           party_size: form.party,
           side: form.side,
           attending: form.attending,
+          dietary: form.dietary,
         },
         event.id,
       )
@@ -165,6 +169,32 @@ export default function RsvpPage({
               </select>
             </label>
           </div>
+
+          {form.attending && (
+            <div className="rounded-xl border border-slate-700/60 bg-slate-800/40 px-3 py-2.5">
+              <button
+                type="button"
+                onClick={() => setShowDietary((s) => !s)}
+                className="flex w-full items-center justify-between text-sm text-slate-300"
+              >
+                <span>Any dietary needs?</span>
+                <span className="text-slate-500">{showDietary ? '▴' : '▾'}</span>
+              </button>
+              {showDietary && (
+                <div className="mt-3">
+                  <p className="mb-2 text-xs text-slate-500">
+                    How many of your {form.party} {form.party === 1 ? 'seat' : 'seats'} need:
+                  </p>
+                  <DietarySteppers
+                    value={form.dietary}
+                    max={form.party}
+                    onChange={(d) => setForm({ ...form, dietary: d })}
+                    tone="dark"
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="flex gap-2 pt-2">
             {(
