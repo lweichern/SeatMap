@@ -12,7 +12,7 @@ npm run dev          # Next 15 dev server on :3000 (background it)
 curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/venues   # 200 when up
 ```
 
-No Supabase env vars → app runs on the localStorage repo (`seatmap.v1` key). Each fresh Playwright browser has empty localStorage — create a venue + layout at the start of every script.
+No Supabase env vars → app runs on the SHARED SERVER STORE (`/api/store`, file `.data/store.json`), with localStorage (`seatmap.v1`) only as fallback. To seed a scenario, `PUT /api/store` with the JSON db (curl or fetch) — seeding localStorage no longer takes effect while the API is reachable. Reset with `PUT` body `null`. All browser contexts share this data (that's the point — cross-device demos).
 
 ## Drive (Playwright)
 
