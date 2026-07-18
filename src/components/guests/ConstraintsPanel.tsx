@@ -35,13 +35,8 @@ export function ConstraintsPanel({ eventId, guests, constraints, onAdd, onRemove
   const select = 'rounded border border-slate-300 px-2 py-1.5 text-xs'
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4">
-      <h3 className="text-sm font-semibold text-slate-900">Seating rules</h3>
-      <p className="mt-0.5 text-xs text-slate-400">
-        Hard constraints the allocator will never break.
-      </p>
-
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+    <div className="px-4 pb-4">
+      <div className="mt-1 flex flex-wrap items-center gap-2">
         <select value={a} onChange={(e) => setA(e.target.value)} className={select}>
           <option value="">Guest…</option>
           {guests.map((g) => (
