@@ -51,7 +51,8 @@ function drawFloorplan(): string {
   return c.toDataURL('image/png')
 }
 
-function drawPhoto(color: string, label: string): string {
+/** Gradient placeholder image with a label — demo/preset content. */
+export function drawPlaceholder(color: string, label: string): string {
   const cv = document.createElement('canvas')
   cv.width = 640
   cv.height = 480
@@ -168,7 +169,7 @@ export async function loadDemoEvent(): Promise<string> {
         id: 'demo-m2',
         name: 'Double-boiled Chicken Soup',
         description: '炖鸡汤',
-        photo: drawPhoto('#b45309', 'SOUP'),
+        photo: drawPlaceholder('#b45309', 'SOUP'),
       },
       { id: 'demo-m3', name: 'Steamed Grouper', description: '清蒸石斑 · light soy & scallions' },
       { id: 'demo-m4', name: 'Golden Fried Rice', description: '黄金炒饭' },
@@ -221,7 +222,7 @@ export async function loadDemoEvent(): Promise<string> {
       id: 'demo-p1',
       event_id: DEMO_EVENT_ID,
       guest_id: 'demo-g2',
-      storage_path: drawPhoto('#e11d48', 'First dance ❤'),
+      storage_path: drawPlaceholder('#e11d48', 'First dance ❤'),
       thumb_path: null,
       status: 'approved',
       ai_flag_reason: null,
@@ -233,7 +234,7 @@ export async function loadDemoEvent(): Promise<string> {
       id: 'demo-p2',
       event_id: DEMO_EVENT_ID,
       guest_id: 'demo-g4',
-      storage_path: drawPhoto('#0ea5e9', 'Cheers from Table 2'),
+      storage_path: drawPlaceholder('#0ea5e9', 'Cheers from Table 2'),
       thumb_path: null,
       status: 'pending_human',
       ai_flag_reason: null,
