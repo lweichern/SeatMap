@@ -5,6 +5,7 @@ import { getRepo } from '@/lib/repo'
 import { peekToken, verifyToken } from '@/lib/token'
 import { mergeRsvp } from '@/lib/rsvp'
 import { DietarySteppers } from '@/components/DietarySteppers'
+import { Flourish } from '@/components/guest/Flourish'
 import type { Dietary, GuestSide, Venue, WeddingEvent } from '@/lib/types'
 
 /**
@@ -75,14 +76,26 @@ export default function RsvpPage({
   }
 
   if (event === 'loading') {
-    return <Shell><p className="mt-24 text-center text-slate-400">Loading invitation…</p></Shell>
+    return (
+      <Shell>
+        <div className="gv-rise pt-36 text-center">
+          <Flourish className="mx-auto" />
+          <p className="gv-display mt-5 text-2xl italic text-(--ink-soft)">
+            Opening your invitation…
+          </p>
+        </div>
+      </Shell>
+    )
   }
   if (!event) {
     return (
       <Shell>
-        <div className="mt-20 px-6 text-center">
-          <p className="text-2xl font-bold text-slate-100">This invitation link isn&apos;t valid</p>
-          <p className="mt-3 text-slate-400">Please check with the couple for the correct link.</p>
+        <div className="gv-rise mx-auto mt-28 max-w-sm px-6 text-center">
+          <Flourish className="mx-auto" />
+          <p className="gv-display mt-5 text-3xl italic">This invitation link isn&apos;t valid</p>
+          <p className="mt-3 text-[15px] leading-relaxed text-(--ink-soft)">
+            Please check with the couple for the correct link.
+          </p>
         </div>
       </Shell>
     )
@@ -91,40 +104,49 @@ export default function RsvpPage({
   if (done) {
     return (
       <Shell>
-        <div className="mt-24 px-6 text-center">
+        <div className="gv-rise mx-auto mt-28 max-w-sm px-6 text-center">
           <p className="text-5xl">{done === 'yes' ? '🎉' : '💐'}</p>
-          <h1 className="mt-4 text-2xl font-bold text-slate-100">
+          <h1 className="gv-display mt-5 text-3xl italic">
             {done === 'yes' ? "You're on the guest list!" : 'Thank you for letting us know'}
           </h1>
-          <p className="mx-auto mt-3 max-w-sm text-slate-400">
+          <p className="mx-auto mt-3 text-[15px] leading-relaxed text-(--ink-soft)">
             {done === 'yes'
               ? 'Closer to the day you’ll receive a personal QR code — it checks you in at the door and shows you exactly where your table is.'
               : `${event.couple_names} will miss you — thanks for responding.`}
           </p>
+          <Flourish className="mx-auto mt-7" />
         </div>
       </Shell>
     )
   }
 
   const input =
-    'mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-500'
+    'mt-1.5 w-full rounded-xl border border-(--line) bg-(--card) px-3.5 py-2.5 text-[15px] normal-case tracking-normal text-(--ink) placeholder:text-(--ink-faint) focus:border-(--gold-soft) focus:outline-none'
+  const label = 'gv-caps block text-[10px] text-(--ink-faint)'
 
   return (
     <Shell>
       <div className="mx-auto max-w-md px-6 pt-12">
-        <p className="text-center text-sm uppercase tracking-widest text-slate-400">
-          You&apos;re invited
+        <p className="gv-caps gv-rise text-center text-[11px] text-(--gold)">
+          You&apos;re invited to the wedding of
         </p>
-        <h1 className="mt-2 text-center text-3xl font-bold text-amber-400">
+        <h1
+          className="gv-display gv-rise mt-2 text-center text-4xl italic sm:text-5xl"
+          style={{ animationDelay: '.08s' }}
+        >
           {event.couple_names}
         </h1>
-        <p className="mt-2 text-center text-slate-300">
+        <p
+          className="gv-rise mt-3 text-center text-[15px] text-(--ink-soft)"
+          style={{ animationDelay: '.16s' }}
+        >
           {event.event_date}
           {venue ? ` · ${venue.name}` : ''}
         </p>
+        <Flourish className="gv-rise mx-auto mt-4" delay=".22s" />
 
-        <div className="mt-8 space-y-3">
-          <label className="block text-xs text-slate-400">
+        <div className="gv-rise mt-8 space-y-4" style={{ animationDelay: '.3s' }}>
+          <label className={label}>
             Your name *
             <input
               value={form.name}
@@ -133,7 +155,7 @@ export default function RsvpPage({
               className={input}
             />
           </label>
-          <label className="block text-xs text-slate-400">
+          <label className={label}>
             Phone
             <input
               value={form.phone}
@@ -143,8 +165,8 @@ export default function RsvpPage({
             />
           </label>
           <div className="flex gap-3">
-            <label className="block flex-1 text-xs text-slate-400">
-              Seats needed (you + guests)
+            <label className={`${label} flex-1`}>
+              Seats needed
               <input
                 type="number"
                 min={1}
@@ -156,7 +178,7 @@ export default function RsvpPage({
                 className={input}
               />
             </label>
-            <label className="block flex-1 text-xs text-slate-400">
+            <label className={`${label} flex-1`}>
               Side
               <select
                 value={form.side}
@@ -171,48 +193,53 @@ export default function RsvpPage({
           </div>
 
           {form.attending && (
-            <div className="rounded-xl border border-slate-700/60 bg-slate-800/40 px-3 py-2.5">
+            <div className="rounded-2xl border border-(--line) bg-(--card) px-4 py-3">
               <button
                 type="button"
                 onClick={() => setShowDietary((s) => !s)}
-                className="flex w-full items-center justify-between text-sm text-slate-300"
+                className="flex w-full items-center justify-between text-sm text-(--ink-soft)"
               >
                 <span>Any dietary needs?</span>
-                <span className="text-slate-500">{showDietary ? '▴' : '▾'}</span>
+                <span className="text-(--gold)">{showDietary ? '▴' : '▾'}</span>
               </button>
               {showDietary && (
                 <div className="mt-3">
-                  <p className="mb-2 text-xs text-slate-500">
+                  <p className="mb-2 text-xs text-(--ink-faint)">
                     How many of your {form.party} {form.party === 1 ? 'seat' : 'seats'} need:
                   </p>
                   <DietarySteppers
                     value={form.dietary}
                     max={form.party}
                     onChange={(d) => setForm({ ...form, dietary: d })}
-                    tone="dark"
+                    tone="light"
                   />
                 </div>
               )}
             </div>
           )}
 
-          <div className="flex gap-2 pt-2">
+          <div className="flex gap-2 pt-1">
             {(
               [
                 [true, 'Joyfully accept 🎉'],
                 [false, 'Regretfully decline'],
               ] as [boolean, string][]
-            ).map(([val, label]) => (
+            ).map(([val, lbl]) => (
               <button
-                key={label}
+                key={lbl}
                 onClick={() => setForm({ ...form, attending: val })}
-                className={`flex-1 rounded-full py-2.5 text-sm font-semibold ${
+                className={`flex-1 rounded-full py-2.5 text-sm font-semibold transition-colors ${
                   form.attending === val
-                    ? 'bg-amber-500 text-slate-900'
-                    : 'bg-slate-800 text-slate-300'
+                    ? 'text-[#fffdf6] shadow-[0_10px_22px_-12px_rgba(140,105,35,.6)]'
+                    : 'border border-(--line) bg-(--card) text-(--ink-soft)'
                 }`}
+                style={
+                  form.attending === val
+                    ? { background: 'linear-gradient(165deg,#c5a04a,#8a6a1f)' }
+                    : undefined
+                }
               >
-                {label}
+                {lbl}
               </button>
             ))}
           </div>
@@ -220,7 +247,8 @@ export default function RsvpPage({
           <button
             onClick={submit}
             disabled={busy || !form.name.trim()}
-            className="mt-2 w-full rounded-full bg-emerald-500 py-3 text-base font-bold text-slate-900 disabled:opacity-40"
+            className="mt-2 w-full rounded-full py-3.5 text-base font-bold text-[#fffdf6] shadow-[0_16px_32px_-14px_rgba(140,105,35,.55)] transition-transform active:scale-[.98] disabled:opacity-50"
+            style={{ background: 'linear-gradient(165deg,#b3903f,#7d5f1a)' }}
           >
             {busy ? 'Sending…' : 'Send RSVP'}
           </button>
@@ -231,5 +259,5 @@ export default function RsvpPage({
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
-  return <div className="min-h-screen bg-slate-900 pb-10">{children}</div>
+  return <div className="gv-shell pb-12">{children}</div>
 }
