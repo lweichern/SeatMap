@@ -167,6 +167,12 @@ export default function EventsPage() {
                 Menu
               </button>
               <button
+                onClick={() => router.push(`/events/${e.id}/kitchen`)}
+                className="rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50"
+              >
+                Kitchen
+              </button>
+              <button
                 onClick={async () => {
                   if (confirm(`Delete event “${e.couple_names}”?`)) {
                     await getRepo().deleteEvent(e.id);
