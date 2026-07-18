@@ -1,5 +1,17 @@
 import { newTableId } from './layout-ops'
-import type { Guest, GuestSide } from './types'
+import { normalizeDietary } from './kitchen'
+import type { Dietary, Guest, GuestSide } from './types'
+
+/** Clamp each dietary count to the party size before normalizing — a guest
+ *  may lower the party picker after setting steppers, and stored counts
+ *  must never exceed the party they belong to. */
+const clampDietary = (d: Dietary | undefined, max: number): Dietary | undefined =>
+  d && {
+    ...d,
+    ...Object.fromEntries(
+      (['veg', 'halal', 'no_beef', 'child'] as const).map((k) => [k, Math.min(d[k] ?? 0, max)]),
+    ),
+  }
 
 export interface RsvpSubmission {
   name: string
@@ -7,6 +19,7 @@ export interface RsvpSubmission {
   party_size: number
   side: GuestSide
   attending: boolean
+  dietary?: Dietary
 }
 
 const digits = (s: string | null | undefined) => (s ?? '').replace(/\D/g, '')
@@ -41,6 +54,7 @@ export function mergeRsvp(
       party_size: sub.party_size,
       phone: match.phone ?? (subPhone ? sub.phone.trim() : null),
       side: match.side === 'both' ? sub.side : match.side,
+      dietary: normalizeDietary(clampDietary(sub.dietary, sub.party_size)) ?? match.dietary,
     }
   }
 
@@ -59,5 +73,6 @@ export function mergeRsvp(
     checked_in_at: null,
     locked: false,
     rsvp,
+    dietary: normalizeDietary(clampDietary(sub.dietary, sub.party_size)),
   }
 }

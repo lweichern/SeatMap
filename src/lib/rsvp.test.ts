@@ -67,3 +67,28 @@ describe('mergeRsvp', () => {
     expect(g.id).not.toBe('gz')
   })
 })
+
+describe('mergeRsvp dietary', () => {
+  const base = { name: 'Dee', phone: '', party_size: 3, side: 'both' as const, attending: true }
+
+  it('stores normalized dietary on a new guest, omitting empties', () => {
+    const g = mergeRsvp([], { ...base, dietary: { veg: 2, halal: 0, allergy: ' ' } }, 'e1')
+    expect(g.dietary).toEqual({ veg: 2 })
+    const none = mergeRsvp([], { ...base, dietary: { veg: 0 } }, 'e1')
+    expect(none.dietary).toBeUndefined()
+  })
+
+  it('replaces existing dietary when resubmitted, keeps it when absent', () => {
+    const existing = mergeRsvp([], { ...base, dietary: { veg: 1 } }, 'e1')
+    const updated = mergeRsvp([existing], { ...base, dietary: { halal: 2 } }, 'e1')
+    expect(updated.id).toBe(existing.id)
+    expect(updated.dietary).toEqual({ halal: 2 })
+    const kept = mergeRsvp([existing], { ...base }, 'e1')
+    expect(kept.dietary).toEqual({ veg: 1 })
+  })
+
+  it('clamps dietary counts to party_size when a guest lowers the party picker', () => {
+    const g = mergeRsvp([], { ...base, party_size: 2, dietary: { veg: 5 } }, 'e1')
+    expect(g.dietary).toEqual({ veg: 2 })
+  })
+})

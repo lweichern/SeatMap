@@ -208,6 +208,11 @@ export async function loadDemoEvent(): Promise<string> {
     })
   }
 
+  // dietary needs so the kitchen sheet demos instantly
+  guests[1].dietary = { veg: 1, child: 1, allergy: 'Child — peanut allergy' } // 陈美玲
+  guests[3].dietary = { no_beef: 1 } // Beth Chua
+  guests[4].dietary = { halal: 2 } // David Tan
+
   const constraint: GuestConstraint = {
     id: 'demo-c1',
     event_id: DEMO_EVENT_ID,

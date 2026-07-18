@@ -147,6 +147,17 @@ export interface WeddingEvent {
 
 export type GuestSide = 'bride' | 'groom' | 'both'
 
+/** Seat counts within a party needing each plate type; counts are independent
+ *  requests to the kitchen, not a partition of the party. */
+export interface Dietary {
+  veg?: number
+  halal?: number
+  no_beef?: number
+  child?: number
+  /** Free-text allergy note for the whole party. */
+  allergy?: string
+}
+
 export interface Guest {
   id: string
   event_id: string
@@ -164,6 +175,8 @@ export interface Guest {
   locked: boolean
   /** Self-registration answer; null = added by the planner / not asked. */
   rsvp?: 'yes' | 'no' | null
+  /** Dietary seat counts from RSVP or planner entry; absent/null = none. */
+  dietary?: Dietary | null
 }
 
 export type ConstraintType = 'must_sit_together' | 'must_not_sit_together'

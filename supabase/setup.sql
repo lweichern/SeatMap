@@ -105,6 +105,7 @@ create table guests (
   table_id text references venue_tables (id),
   locked boolean not null default false,
   rsvp text check (rsvp in ('yes', 'no')),
+  dietary jsonb,
   qr_token text unique,
   checked_in_at timestamptz,
   checked_in_by uuid references users (id)
@@ -226,3 +227,6 @@ end $$;
 -- the pre-auth app stamps everything with this org id
 insert into organizations (id, name) values ('local-org', 'Demo Organization')
 on conflict (id) do nothing;
+
+-- 0003: dietary capture
+alter table guests add column if not exists dietary jsonb;
