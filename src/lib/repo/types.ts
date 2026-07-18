@@ -48,6 +48,7 @@ export interface VenueRepo {
   listPhotos(eventId: string, statuses?: PhotoStatus[]): Promise<Photo[]>
   savePhoto(photo: Photo): Promise<void>
   updatePhoto(id: string, patch: Partial<Photo>): Promise<void>
+  deletePhoto(id: string): Promise<void>
   listVenues(): Promise<Venue[]>
   getVenue(id: string): Promise<Venue | null>
   saveVenue(venue: Venue): Promise<void>

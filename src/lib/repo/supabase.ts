@@ -238,4 +238,9 @@ export class SupabaseVenueRepo implements VenueRepo {
     const { error } = await this.client.from('photos').update(patch).eq('id', id)
     if (error) throw error
   }
+
+  async deletePhoto(id: string): Promise<void> {
+    const { error } = await this.client.from('photos').delete().eq('id', id)
+    if (error) throw error
+  }
 }
