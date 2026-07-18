@@ -26,6 +26,9 @@ export function DemoButton() {
       await loadDemoEvent()
       router.push('/events')
       router.refresh()
+    } catch (e) {
+      const err = e as { message?: string; details?: string }
+      alert(`Couldn't reset the demo: ${err?.message ?? String(e)}${err?.details ? ` (${err.details})` : ''}`)
     } finally {
       setBusy(false)
     }

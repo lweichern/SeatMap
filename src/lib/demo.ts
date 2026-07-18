@@ -76,7 +76,21 @@ export async function loadDemoEvent(): Promise<string> {
   const oldPhotos = await repo.listPhotos(DEMO_EVENT_ID).catch(() => [])
   for (const ph of oldPhotos) await repo.deletePhoto(ph.id)
   await repo.deleteEvent(DEMO_EVENT_ID)
-  await repo.deleteVenue(DEMO_VENUE_ID)
+
+  // The planner may have built a REAL event on the demo venue/layout.
+  // Factory-resetting the hall would break it (and Postgres blocks the
+  // venue delete via FK anyway) — so only reset the hall when nothing
+  // else depends on it. Demo guests seed unassigned, so they don't need
+  // any particular table to exist. If listing fails, assume it's in use.
+  const otherEvents = await repo.listEvents().catch(() => null)
+  const hallInUse =
+    otherEvents === null ||
+    otherEvents.some(
+      (e) =>
+        e.id !== DEMO_EVENT_ID &&
+        (e.venue_id === DEMO_VENUE_ID || e.layout_id === DEMO_LAYOUT_ID),
+    )
+  if (!hallInUse) await repo.deleteVenue(DEMO_VENUE_ID)
 
   const venue: Venue = {
     id: DEMO_VENUE_ID,
@@ -249,8 +263,10 @@ export async function loadDemoEvent(): Promise<string> {
     },
   ]
 
-  await repo.saveVenue(venue)
-  await repo.saveLayout(layout, tables)
+  if (!hallInUse) {
+    await repo.saveVenue(venue)
+    await repo.saveLayout(layout, tables)
+  }
   await repo.saveEvent(event)
   await repo.saveGuests(guests)
   await repo.saveConstraint(constraint)
