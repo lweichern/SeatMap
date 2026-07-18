@@ -6,6 +6,8 @@ import { getRepo } from '@/lib/repo'
 import { newTableId } from '@/lib/layout-ops'
 import { ImportDialog } from '@/components/guests/ImportDialog'
 import { ConstraintsPanel } from '@/components/guests/ConstraintsPanel'
+import { DietarySteppers } from '@/components/DietarySteppers'
+import { normalizeDietary, summarizeDietary } from '@/lib/kitchen'
 import {
   downloadBlob,
   ensureTokens,
@@ -35,6 +37,7 @@ export default function GuestsPage({
   const [newGuest, setNewGuest] = useState(EMPTY_NEW)
   const [exporting, setExporting] = useState<'' | 'pdf' | 'zip'>('')
   const [inviteNote, setInviteNote] = useState('')
+  const [dietFor, setDietFor] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
     const repo = getRepo()
@@ -268,6 +271,7 @@ export default function GuestsPage({
                 <th className="px-3 py-2 w-20">Pax</th>
                 <th className="px-3 py-2 w-28">Side</th>
                 <th className="px-3 py-2 w-36">Group</th>
+                <th className="px-3 py-2 w-36">Dietary</th>
                 <th className="px-3 py-2 w-16">VIP</th>
                 <th className="px-3 py-2 w-10"></th>
               </tr>
@@ -322,6 +326,37 @@ export default function GuestsPage({
                       className={input}
                     />
                   </td>
+                  <td className="relative px-3 py-1.5">
+                    <button
+                      onClick={() => setDietFor(dietFor === g.id ? null : g.id)}
+                      title={g.dietary?.allergy ? `Allergy: ${g.dietary.allergy}` : 'Edit dietary needs'}
+                      className="w-full rounded-md border border-transparent px-1.5 py-1 text-left text-xs hover:border-slate-200 hover:bg-slate-50"
+                    >
+                      {summarizeDietary(g.dietary) || <span className="text-slate-300">—</span>}
+                      {g.dietary?.allergy && <span className="ml-1 text-red-500">•</span>}
+                    </button>
+                    {dietFor === g.id && (
+                      <div className="absolute right-0 top-full z-20 mt-1 w-72 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+                        <div className="mb-2 flex items-center justify-between">
+                          <p className="text-xs font-semibold text-slate-500">
+                            Dietary needs · {g.party_size} pax
+                          </p>
+                          <button
+                            onClick={() => setDietFor(null)}
+                            className="text-xs text-slate-400 hover:text-slate-600"
+                          >
+                            Done
+                          </button>
+                        </div>
+                        <DietarySteppers
+                          value={g.dietary ?? {}}
+                          max={g.party_size}
+                          onChange={(d) => patch(g.id, { dietary: normalizeDietary(d) ?? null })}
+                          tone="light"
+                        />
+                      </div>
+                    )}
+                  </td>
                   <td className="px-3 py-1.5 text-center">
                     <input
                       type="checkbox"
@@ -364,7 +399,7 @@ export default function GuestsPage({
                     className={input}
                   />
                 </td>
-                <td colSpan={4} className="px-3 py-2">
+                <td colSpan={5} className="px-3 py-2">
                   <button
                     onClick={addManual}
                     disabled={!newGuest.name.trim()}
