@@ -69,6 +69,11 @@ export default function RsvpPage({
         event.id,
       )
       await repo.saveGuest(guest)
+      // remember who this phone belongs to — the /find entrance QR
+      // recognizes them instantly next time
+      try {
+        localStorage.setItem(`seatmap.selfid.${event.id}`, guest.id)
+      } catch {}
       setDone(form.attending ? 'yes' : 'no')
     } finally {
       setBusy(false)

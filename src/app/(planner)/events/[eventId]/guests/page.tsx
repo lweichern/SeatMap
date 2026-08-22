@@ -161,6 +161,18 @@ export default function GuestsPage({
     a.click()
   }
 
+  async function downloadFindQr() {
+    if (!event) return
+    const token = await signToken(event.id, 'kiosk', event.guest_token_secret)
+    const url = `${await getShareOrigin()}/find/${token}`
+    const QRCode = await import('qrcode')
+    const dataUrl = await QRCode.toDataURL(url, { width: 800, margin: 2 })
+    const a = document.createElement('a')
+    a.href = dataUrl
+    a.download = `find-my-seat-${event.couple_names.replace(/\s+/g, '-').toLowerCase()}.png`
+    a.click()
+  }
+
   const rsvpYes = guests.filter((g) => g.rsvp === 'yes').length
   const rsvpNo = guests.filter((g) => g.rsvp === 'no').length
 
@@ -217,6 +229,14 @@ export default function GuestsPage({
                 onClick={() => {
                   setMenu('')
                   downloadInviteQr()
+                }}
+              />
+              <MenuItem
+                label="Seat-finder poster QR"
+                hint="One QR at the entrance — guests find their own table"
+                onClick={() => {
+                  setMenu('')
+                  downloadFindQr()
                 }}
               />
             </div>
