@@ -61,4 +61,9 @@ describe('matchGuests', () => {
     expect(matchGuests(guests, 'kelly teo')).toEqual([])
     expect(matchGuests(guests, '   ')).toEqual([])
   })
+
+  it('single-character input matches nothing', () => {
+    expect(matchGuests(guests, 't')).toEqual([])
+    expect(matchGuests(guests, '陈')).toEqual([])
+  })
 })

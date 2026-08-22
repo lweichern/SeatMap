@@ -64,7 +64,11 @@ export default function FindPage({
     try {
       localStorage.setItem(`seatmap.selfid.${event.id}`, g.id)
     } catch {}
-    router.push(`/g/${await signToken(event.id, g.id, event.guest_token_secret)}`)
+    try {
+      router.push(`/g/${await signToken(event.id, g.id, event.guest_token_secret)}`)
+    } catch {
+      setBusy(false)
+    }
   }
 
   if (event === 'loading') {

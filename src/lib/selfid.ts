@@ -26,10 +26,11 @@ export function maskPhone(phone: string | null | undefined): string | null {
  * both-ways containment, narrowed by phone last-digits when they help.
  * A wrong digit must not hide an obvious name match, so an empty digit
  * filter falls back to the name matches. Declined guests never match.
+ * Single-character input matches nothing — too broad to be useful.
  */
 export function matchGuests(guests: Guest[], name: string, last4?: string): Guest[] {
   const n = normalizeName(name)
-  if (!n) return []
+  if (n.length < 2) return []
   const byName = guests.filter((g) => {
     if (g.rsvp === 'no') return false
     const gn = normalizeName(g.name)
