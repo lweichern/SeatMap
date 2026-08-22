@@ -77,6 +77,11 @@ invitation page for table + 3D wayfinding.
 - Exact-ish match required; no browsable guest list. Masked phone only.
 - The kiosk token grants lookup only — the /find page never lists guests
   beyond matched candidates (≤5).
+- Honesty note: the ≤5-candidate limit is a UI-level restriction. Like the
+  RSVP page, /find loads the event's guest list into the browser via the
+  anon repo — a technical user with the poster URL can read it in devtools.
+  A data-level fix (server-side match endpoint, guest-scoped RPCs) is the
+  production-hardening work already tracked for v2.
 
 ## Testing
 
