@@ -135,7 +135,7 @@ export default function GuestsPage({
   async function rsvpUrl(): Promise<string | null> {
     if (!event) return null
     const token = await signToken(event.id, 'rsvp', event.guest_token_secret)
-    return `${await getShareOrigin()}/rsvp/${token}`
+    return `${await getShareOrigin()}/invite/${token}`
   }
 
   async function copyInviteLink() {
@@ -230,7 +230,7 @@ export default function GuestsPage({
             <div className="absolute left-0 top-full z-20 mt-1 w-64 rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
               <MenuItem
                 label="Copy invite link"
-                hint="One public link — RSVPs land on this list automatically"
+                hint="The full e-invitation — envelope, countdown, ballroom & RSVP"
                 onClick={() => {
                   setMenu('')
                   copyInviteLink()
