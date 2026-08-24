@@ -46,3 +46,7 @@ next-env.d.ts
 # dev shared store
 .data/
 .next-build/
+
+# separate side projects — not part of the app build
+landing/
+remotion-promo/
