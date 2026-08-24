@@ -21,6 +21,7 @@ No Supabase env vars → app runs on the SHARED SERVER STORE (`/api/store`, file
 Canvas coordinate math: the Konva stage starts at view offset (40,40), zoom 1, default 20 px/m until scale is set. Page coords = canvas bbox + 40 + world px.
 
 **Gotchas that burned a session:**
+- NEVER `git add -A` from the repo root — `landing/` and `remotion-promo/` are the user's separate side projects (now gitignored). Committing remotion-promo broke the Vercel build: root tsconfig includes `**/*.tsx`, so Next type-checks it and `remotion` isn't installed in CI. Stage explicit paths.
 - Build with `NEXT_DIST_DIR=.next-build npm run build` — it outputs to a separate dir so a running dev server's `.next` is untouched (next.config reads the env var; Vercel is unaffected because it doesn't set it). Never run a bare `npm run build` while dev is up.
 - ONE dev server per checkout, ever. Two `next dev` processes share `.next` and corrupt each other (unstyled pages, phantom 404s, `[object Object]` overlays, vendor-chunks errors). The `predev` hook (scripts/ensure-single-dev.mjs) now refuses to start a second one. The USER usually runs the dev server in their terminal — probe against theirs instead of starting your own; check `lsof -nP -iTCP:3000 -sTCP:LISTEN` first.
 - Re-measure the canvas bounding box after any toolbar content changes (the "Scale not set" badge disappearing changes toolbar height and shifts the canvas).
