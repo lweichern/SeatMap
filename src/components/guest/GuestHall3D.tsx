@@ -140,39 +140,54 @@ function FlyIn({
     // table — never nose-up against the chairs — then rise to the view
     const cutoff = Math.min(Math.max(doorArc + 1.2, total - 4.5), total - 1.5)
     const per = total / (pts.length - 1)
-    // start IN the doorway (the desk label stays behind the camera) and
-    // walk the aisle low; distant tables get a longer walk automatically
-    const fromArc = Math.max(0, doorArc - 0.6)
+    // the dive lands just INSIDE the doorway (never through the wall) and
+    // the walk goes low along the aisle; distant tables walk longer
+    const fromArc = Math.min(doorArc + 0.2, Math.max(0, cutoff - 1))
     const keep = pts.filter((_, i) => i * per >= fromArc && i * per <= cutoff)
     if (keep.length < 2) return null
     const dx = keep[1].x - keep[0].x
     const dy = keep[1].y - keep[0].y
     const len = Math.hypot(dx, dy) || 1
     const cam: THREE.Vector3[] = [
-      // just outside the threshold, person-height, below the 2.4 m lintel
-      new THREE.Vector3(keep[0].x - (dx / len) * 2.2, 2.2, keep[0].y - (dy / len) * 2.2),
+      // person-height along the aisle, below sightline clutter
       ...keep.map((pnt) => new THREE.Vector3(pnt.x, 2.1, pnt.y)),
       to.clone(), // then sweep up and aside into the orbit view
     ]
+    if (cam.length < 3) cam.unshift(new THREE.Vector3(keep[0].x - (dx / len), 2.1, keep[0].y - (dy / len)))
     // centripetal: hugs the waypoints — no corner-cutting through the doorway wall
-    return new THREE.CatmullRomCurve3(cam, false, 'centripetal')
+    const curve = new THREE.CatmullRomCurve3(cam, false, 'centripetal')
+    const startP = curve.getPointAt(0)
+    return { curve, startP }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.route, table, to])
+
+  const DIVE = 2.2 // top view → swoop down to the entrance
+  const WALK = 6.0 // entrance → table, along the route
 
   useFrame(({ camera, clock }) => {
     if (done.current) return
     if (start.current === null) start.current = clock.elapsedTime
-    const t = Math.min((clock.elapsedTime - start.current) / (walk ? 6.0 : 2.6), 1)
+    const el = clock.elapsedTime - start.current
+    const t = Math.min(el / (walk ? DIVE + WALK : 2.6), 1)
     if (walk) {
-      const e = t * t * (3 - 2 * t) // smoothstep: gentle start and landing
-      camera.position.copy(walk.getPointAt(e))
-      // gaze at the floor a little ahead on the route, easing onto the table
-      const ahead = walk.getPointAt(Math.min(1, e + 0.18))
-      const look = new THREE.Vector3(ahead.x, 1.2, ahead.z)
-      // the spotlit table takes over the gaze from mid-walk — bright frames
-      look.lerp(target, THREE.MathUtils.smoothstep(e, 0.3, 0.75))
-      camera.lookAt(look)
-      if (controlsRef.current) controlsRef.current.target.copy(look)
+      if (el < DIVE) {
+        // phase 1: establish from the top, then dive to the doorway
+        const d = el / DIVE
+        const e = d * d * (3 - 2 * d)
+        camera.position.lerpVectors(from, walk.startP, e)
+        const look = new THREE.Vector3().set(b.cx, 0, b.cy).lerp(target, e)
+        camera.lookAt(look)
+        if (controlsRef.current) controlsRef.current.target.copy(look)
+        return
+      }
+      // phase 2: walk the route
+      const w = Math.min((el - DIVE) / WALK, 1)
+      const e = w * w * (3 - 2 * w) // smoothstep: gentle start and landing
+      camera.position.copy(walk.curve.getPointAt(e))
+      // gaze locked on the spotlit table — continuous from dive to arrival,
+      // with the route dots leading through the lower periphery
+      camera.lookAt(target)
+      if (controlsRef.current) controlsRef.current.target.copy(target)
     } else {
       const e = 1 - Math.pow(1 - t, 3)
       camera.position.lerpVectors(from, to, e)
