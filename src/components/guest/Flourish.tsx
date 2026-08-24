@@ -1,11 +1,20 @@
 /** Gold line—diamond—line divider used across the guest-facing pages. */
-export function Flourish({ className, delay }: { className?: string; delay?: string }) {
+export function Flourish({
+  className,
+  delay,
+  draw,
+}: {
+  className?: string
+  delay?: string
+  /** Adds `gv-draw`: the line/diamond stroke animate in via stroke-dashoffset. */
+  draw?: boolean
+}) {
   return (
     <svg
       width="132"
       height="10"
       viewBox="0 0 132 10"
-      className={className}
+      className={draw ? [className, 'gv-draw'].filter(Boolean).join(' ') : className}
       style={delay ? { animationDelay: delay } : undefined}
       aria-hidden
     >
