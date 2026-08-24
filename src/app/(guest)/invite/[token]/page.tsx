@@ -152,7 +152,7 @@ export default function InvitePage({
   }
 
   return (
-    <Shell>
+    <Shell locked={!opened}>
       {!opened && (
         <InviteEnvelope
           monogram={monogram(event.couple_names)}
@@ -180,6 +180,12 @@ export default function InvitePage({
   )
 }
 
-function Shell({ children }: { children: ReactNode }) {
-  return <div className="gv-shell pb-12">{children}</div>
+function Shell({ children, locked }: { children: ReactNode; locked?: boolean }) {
+  // locked (envelope still sealed): no bottom padding + clipped height, so
+  // the page cannot rubber-band even a pixel behind the envelope
+  return (
+    <div className={`gv-shell ${locked ? 'h-[100svh] overflow-hidden pb-0' : 'pb-12'}`}>
+      {children}
+    </div>
+  )
 }
