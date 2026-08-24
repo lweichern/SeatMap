@@ -15,6 +15,7 @@ import {
   exportPngZip,
 } from '@/lib/qr-export'
 import { signToken } from '@/lib/token'
+import { downloadPosterPng } from '@/lib/poster'
 import { getShareOrigin } from '@/lib/share-origin'
 import type { Guest, GuestConstraint, GuestSide, WeddingEvent } from '@/lib/types'
 
@@ -153,24 +154,36 @@ export default function GuestsPage({
   async function downloadInviteQr() {
     const url = await rsvpUrl()
     if (!url || !event) return
-    const QRCode = await import('qrcode')
-    const dataUrl = await QRCode.toDataURL(url, { width: 800, margin: 2 })
-    const a = document.createElement('a')
-    a.href = dataUrl
-    a.download = `rsvp-${event.couple_names.replace(/\s+/g, '-').toLowerCase()}.png`
-    a.click()
+    await downloadPosterPng({
+      eyebrow: "You're invited to the wedding of",
+      title: event.couple_names,
+      subtitle: formatDate(event.event_date),
+      instruction: 'Scan to RSVP',
+      url,
+      filename: `rsvp-${event.couple_names.replace(/\s+/g, '-').toLowerCase()}.png`,
+    })
   }
 
   async function downloadFindQr() {
     if (!event) return
     const token = await signToken(event.id, 'kiosk', event.guest_token_secret)
     const url = `${await getShareOrigin()}/find/${token}`
-    const QRCode = await import('qrcode')
-    const dataUrl = await QRCode.toDataURL(url, { width: 800, margin: 2 })
-    const a = document.createElement('a')
-    a.href = dataUrl
-    a.download = `find-my-seat-${event.couple_names.replace(/\s+/g, '-').toLowerCase()}.png`
-    a.click()
+    await downloadPosterPng({
+      eyebrow: 'Welcome to the wedding of',
+      title: event.couple_names,
+      subtitle: formatDate(event.event_date),
+      instruction: 'Scan to find your seat',
+      url,
+      filename: `find-my-seat-${event.couple_names.replace(/\s+/g, '-').toLowerCase()}.png`,
+    })
+  }
+
+  /** "2026-09-12" → "12 September 2026" (falls back to the raw string). */
+  function formatDate(d: string) {
+    const t = new Date(`${d}T00:00:00`)
+    return isNaN(t.getTime())
+      ? d
+      : t.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
   }
 
   const rsvpYes = guests.filter((g) => g.rsvp === 'yes').length
@@ -224,16 +237,16 @@ export default function GuestsPage({
                 }}
               />
               <MenuItem
-                label="Download invite QR"
-                hint="The same invitation as a QR image"
+                label="Invite poster (QR)"
+                hint="Print-ready invitation poster with the RSVP code"
                 onClick={() => {
                   setMenu('')
                   downloadInviteQr()
                 }}
               />
               <MenuItem
-                label="Seat-finder poster QR"
-                hint="One QR at the entrance — guests find their own table"
+                label="Seat-finder poster (QR)"
+                hint="Print-ready entrance poster — guests find their own table"
                 onClick={() => {
                   setMenu('')
                   downloadFindQr()

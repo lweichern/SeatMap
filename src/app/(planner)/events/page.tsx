@@ -19,6 +19,7 @@ export default function EventsPage() {
     layoutId: "",
   });
   const [loaded, setLoaded] = useState(false);
+  const [menuFor, setMenuFor] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     const repo = getRepo();
@@ -123,6 +124,9 @@ export default function EventsPage() {
         </button>
       </div>
 
+      {menuFor && (
+        <div className="fixed inset-0 z-10" onClick={() => setMenuFor(null)} />
+      )}
       <div className="mt-8 space-y-3">
         {loaded && events.length === 0 && (
           <p className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-sm text-slate-400">
@@ -141,7 +145,7 @@ export default function EventsPage() {
                 {e.event_date} · {venueName(e.venue_id)}
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => router.push(`/events/${e.id}/guests`)}
                 className="rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50"
@@ -152,37 +156,52 @@ export default function EventsPage() {
                 onClick={() => router.push(`/events/${e.id}/allocate`)}
                 className="rounded-md bg-slate-900 px-3 py-1.5 text-sm text-white hover:bg-slate-700"
               >
-                Seating
+                Seating →
               </button>
-              <button
-                onClick={() => router.push(`/events/${e.id}/photos`)}
-                className="rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50"
-              >
-                Photos
-              </button>
-              <button
-                onClick={() => router.push(`/events/${e.id}/menu`)}
-                className="rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50"
-              >
-                Menu
-              </button>
-              <button
-                onClick={() => router.push(`/events/${e.id}/kitchen`)}
-                className="rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50"
-              >
-                Kitchen
-              </button>
-              <button
-                onClick={async () => {
-                  if (confirm(`Delete event “${e.couple_names}”?`)) {
-                    await getRepo().deleteEvent(e.id);
-                    refresh();
-                  }
-                }}
-                className="rounded-md border border-red-200 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
-              >
-                Delete
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setMenuFor(menuFor === e.id ? null : e.id)}
+                  aria-label="More actions"
+                  className="rounded-md border border-slate-200 px-2.5 py-1.5 text-sm text-slate-500 hover:bg-slate-50"
+                >
+                  ⋯
+                </button>
+                {menuFor === e.id && (
+                  <div className="absolute right-0 top-full z-20 mt-1 w-40 rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
+                    {(
+                      [
+                        ["Photos", "photos"],
+                        ["Menu", "menu"],
+                        ["Kitchen sheet", "kitchen"],
+                      ] as const
+                    ).map(([label, path]) => (
+                      <button
+                        key={path}
+                        onClick={() => {
+                          setMenuFor(null);
+                          router.push(`/events/${e.id}/${path}`);
+                        }}
+                        className="block w-full rounded-md px-3 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-50"
+                      >
+                        {label}
+                      </button>
+                    ))}
+                    <div className="my-1 h-px bg-slate-100" />
+                    <button
+                      onClick={async () => {
+                        setMenuFor(null);
+                        if (confirm(`Delete event “${e.couple_names}”?`)) {
+                          await getRepo().deleteEvent(e.id);
+                          refresh();
+                        }
+                      }}
+                      className="block w-full rounded-md px-3 py-1.5 text-left text-sm text-red-600 hover:bg-red-50"
+                    >
+                      Delete event
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         ))}

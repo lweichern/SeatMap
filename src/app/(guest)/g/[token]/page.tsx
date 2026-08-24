@@ -174,6 +174,19 @@ function GuestBody({
         >
           {event.couple_names}
         </h1>
+        <p
+          className="gv-rise mt-2 text-[14px] text-(--ink-soft)"
+          style={{ animationDelay: '.12s' }}
+        >
+          {formatDate(event.event_date)}
+          {venue.name ? ` · ${venue.name}` : ''}
+          <button
+            onClick={() => downloadIcs(event, venue)}
+            className="ml-2 text-[12px] text-(--ink-faint) underline decoration-(--gold-soft) underline-offset-2 hover:text-(--gold)"
+          >
+            Add to calendar
+          </button>
+        </p>
         <Flourish className="gv-rise mx-auto mt-4" delay=".16s" />
         <p
           className="gv-rise mt-4 text-[15px] text-(--ink-soft)"
@@ -331,4 +344,42 @@ function GuestBody({
 
 function Shell({ children }: { children: ReactNode }) {
   return <div className="gv-shell pb-12">{children}</div>
+}
+
+/** "2026-09-12" → "12 September 2026" (falls back to the raw string). */
+function formatDate(d: string) {
+  const t = new Date(`${d}T00:00:00`)
+  return isNaN(t.getTime())
+    ? d
+    : t.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+/** All-day calendar entry for the wedding — works in Apple/Google/Outlook. */
+function downloadIcs(event: GuestView['event'], venue: GuestView['venue']) {
+  const d = event.event_date?.replaceAll('-', '')
+  if (!d || d.length !== 8) return
+  const next = new Date(`${event.event_date}T00:00:00`)
+  next.setDate(next.getDate() + 1)
+  const dtend = `${next.getFullYear()}${String(next.getMonth() + 1).padStart(2, '0')}${String(
+    next.getDate(),
+  ).padStart(2, '0')}` // local parts — toISOString would shift across UTC
+  const esc = (s: string) => s.replace(/([,;\\])/g, '\\$1')
+  const ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//SeatMap//EN',
+    'BEGIN:VEVENT',
+    `UID:seatmap-${event.id}`,
+    `DTSTART;VALUE=DATE:${d}`,
+    `DTEND;VALUE=DATE:${dtend}`,
+    `SUMMARY:${esc(`${event.couple_names} — Wedding`)}`,
+    `LOCATION:${esc([venue.name, venue.address].filter(Boolean).join(', '))}`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n')
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }))
+  a.download = 'wedding.ics'
+  a.click()
+  URL.revokeObjectURL(a.href)
 }
