@@ -54,29 +54,30 @@ export function InviteBallroom({ scene, fallback }: { scene: HallSceneProps; fal
 
   // Drive `progress` from scroll position — passive listener, rAF-throttled.
   // Reduced motion: skip the listener entirely and hold a fixed midpoint.
+  //
+  // Geometry (`sectionTop`/`sectionHeight`/`viewportH`) is re-derived from
+  // `getBoundingClientRect()` on every rAF-throttled application rather than
+  // cached once at mount — content above this section (the countdown, which
+  // starts `null` and mounts a tick later) can shift the section's
+  // document-space offset after mount, and a mount-time cache would skew
+  // scrub progress until the next resize recomputed it.
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       setProgress(0.5)
       return
     }
 
-    let sectionTop = 0
-    let sectionHeight = 0
-    let viewportH = window.innerHeight
     let raf = 0
     let pending = false
 
-    const measure = () => {
+    const apply = () => {
+      pending = false
       const el = sectionRef.current
       if (!el) return
       const rect = el.getBoundingClientRect()
-      sectionTop = rect.top + window.scrollY
-      sectionHeight = rect.height
-      viewportH = window.innerHeight
-    }
-
-    const apply = () => {
-      pending = false
+      const sectionTop = rect.top + window.scrollY
+      const sectionHeight = rect.height
+      const viewportH = window.innerHeight
       const denom = sectionHeight - viewportH
       const p = denom > 0 ? (window.scrollY - sectionTop) / denom : 0
       setProgress(Math.min(1, Math.max(0, p)))
@@ -88,18 +89,14 @@ export function InviteBallroom({ scene, fallback }: { scene: HallSceneProps; fal
       raf = requestAnimationFrame(apply)
     }
 
-    const onResize = () => {
-      measure()
-      onScroll()
-    }
-
-    measure()
     apply()
     window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', onResize, { passive: true })
+    // Viewport/layout shifts (e.g. rotation, dev-tools resize) don't fire
+    // `scroll` on their own — reuse the same throttled path to reapply.
+    window.addEventListener('resize', onScroll, { passive: true })
     return () => {
       window.removeEventListener('scroll', onScroll)
-      window.removeEventListener('resize', onResize)
+      window.removeEventListener('resize', onScroll)
       cancelAnimationFrame(raf)
     }
   }, [])

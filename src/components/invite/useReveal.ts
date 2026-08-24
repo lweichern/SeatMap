@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, type RefObject } from 'react'
+import { useCallback, useRef } from 'react'
 
 /**
  * One shared IntersectionObserver for every `.gv-io` element on the page —
@@ -33,17 +33,23 @@ function getSharedObserver(): IntersectionObserver | null {
  * Ref the element you want to reveal with class `gv-io` in markup; once it
  * crosses 20% visibility this adds `gv-io-in` (see THEME in the guest
  * layout) and stops observing — a one-shot reveal, not a scroll-linked one.
+ *
+ * Returns a callback ref rather than a `RefObject` so observation starts
+ * the moment the element attaches to the DOM, no matter when that happens.
+ * A `RefObject` populated by a one-shot `useEffect(..., [])` only ever
+ * observes whatever was mounted on the *first* render — a component like
+ * `InviteCountdown`, which renders `null` until its first effect resolves,
+ * would mount its `<section>` a tick later and never get observed.
  */
-export function useReveal<T extends HTMLElement = HTMLDivElement>(): RefObject<T | null> {
-  const ref = useRef<T | null>(null)
+export function useReveal<T extends HTMLElement = HTMLDivElement>(): (el: T | null) => void {
+  const elRef = useRef<T | null>(null)
 
-  useEffect(() => {
-    const el = ref.current
+  const setRef = useCallback((el: T | null) => {
     const observer = getSharedObserver()
-    if (!el || !observer) return
-    observer.observe(el)
-    return () => observer.unobserve(el)
+    if (elRef.current && observer) observer.unobserve(elRef.current)
+    elRef.current = el
+    if (el && observer) observer.observe(el)
   }, [])
 
-  return ref
+  return setRef
 }
