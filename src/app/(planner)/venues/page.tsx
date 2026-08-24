@@ -137,12 +137,45 @@ export default function VenuesPage() {
                         {l.capacity_total} pax
                       </span>
                     </span>
-                    <button
-                      onClick={() => router.push(`/venues/${v.id}/layouts/${l.id}`)}
-                      className="rounded-md bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200"
-                    >
-                      Open editor
-                    </button>
+                    <span className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => router.push(`/venues/${v.id}/layouts/${l.id}`)}
+                        className="rounded-md bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200"
+                      >
+                        Open editor
+                      </button>
+                      <button
+                        onClick={async () => {
+                          const name = prompt('Rename layout', l.name)?.trim()
+                          if (!name || name === l.name) return
+                          const full = await getRepo().getLayout(l.id)
+                          if (!full) return
+                          const { tables, ...layout } = full
+                          await getRepo().saveLayout({ ...layout, name }, tables)
+                          refresh()
+                        }}
+                        title="Rename layout"
+                        className="rounded-md px-2 py-1 text-xs text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                      >
+                        ✎
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (
+                            confirm(
+                              `Delete layout “${l.name}”? Events using it will lose their floor plan.`,
+                            )
+                          ) {
+                            await getRepo().deleteLayout(l.id)
+                            refresh()
+                          }
+                        }}
+                        title="Delete layout"
+                        className="rounded-md px-2 py-1 text-xs text-slate-400 hover:bg-red-50 hover:text-red-600"
+                      >
+                        ✕
+                      </button>
+                    </span>
                   </li>
                 ))}
               </ul>
