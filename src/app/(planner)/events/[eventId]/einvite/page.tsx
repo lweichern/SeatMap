@@ -292,7 +292,7 @@ export default function EinvitePage({
         <div className="rounded-lg border border-slate-200 bg-white p-3">
           <p className="text-xs font-medium text-slate-500">Music (optional)</p>
           <p className="text-[11px] text-slate-400">
-            MP3 · ≤2.5 MB · a 60–90s loop is perfect. Starts when the guest opens the
+            MP3 · ≤5 MB · a 60–90s loop is perfect. Starts when the guest opens the
             envelope; they can pause it anytime.
           </p>
           {config.music ? (
@@ -317,8 +317,8 @@ export default function EinvitePage({
                     const f = e.target.files?.[0]
                     e.target.value = ''
                     if (!f) return
-                    if (f.size > 2.5 * 1024 * 1024) {
-                      alert('That file is over 2.5 MB — please use a shorter clip or a compressed MP3.')
+                    if (f.size > 5 * 1024 * 1024) {
+                      alert('That file is over 5 MB — please use a shorter clip or a compressed MP3.')
                       return
                     }
                     const r = new FileReader()
