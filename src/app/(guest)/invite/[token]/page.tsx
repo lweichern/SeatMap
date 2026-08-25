@@ -17,7 +17,6 @@ import { InviteRedDuo } from '@/components/invite/InviteRedDuo'
 import { InviteCalendar } from '@/components/invite/InviteCalendar'
 import { InviteCountdown } from '@/components/invite/InviteCountdown'
 import { InviteDetails } from '@/components/invite/InviteDetails'
-import { InviteMenu } from '@/components/invite/InviteMenu'
 import { InviteLetter } from '@/components/invite/InviteLetter'
 import { InviteRsvp } from '@/components/invite/InviteRsvp'
 import type { Venue, WeddingEvent } from '@/lib/types'
@@ -179,7 +178,6 @@ export default function InvitePage({
         <InviteCountdown eventDate={event.event_date} />
         <InviteDetails event={event} venue={venue} startsAt={cfg ? event.starts_at : undefined} />
         <InviteRsvp event={event} prefill={prefill} deadline={cfg?.rsvp_deadline} />
-        <InviteMenu menu={event.menu ?? []} />
         {cfg && (
           <InviteLetter
             lines={cfg.letter ?? DEFAULT_LETTER}
