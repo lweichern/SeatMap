@@ -32,6 +32,8 @@ function cleanConfig(cfg: InviteConfig): InviteConfig {
     rsvp_deadline: cfg.rsvp_deadline || undefined,
     letter: letter.length > 0 ? letter : undefined,
     red_accent: cfg.red_accent,
+    music: cfg.music || undefined,
+    auto_scroll: cfg.auto_scroll, // explicit false must survive
     photos: photoEntries.length > 0 ? Object.fromEntries(photoEntries) : undefined,
   }
 }
@@ -286,6 +288,65 @@ export default function EinvitePage({
           />
           Bold red her/him section
         </label>
+
+        <div className="rounded-lg border border-slate-200 bg-white p-3">
+          <p className="text-xs font-medium text-slate-500">Music (optional)</p>
+          <p className="text-[11px] text-slate-400">
+            MP3 · ≤2.5 MB · a 60–90s loop is perfect. Starts when the guest opens the
+            envelope; they can pause it anytime.
+          </p>
+          {config.music ? (
+            <div className="mt-2 flex items-center gap-3">
+              <audio controls src={config.music} className="h-9 w-full max-w-sm" />
+              <button
+                onClick={() => setConfig((c) => ({ ...c, music: undefined }))}
+                className="rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-500 hover:bg-red-50 hover:text-red-600"
+              >
+                ✕ Remove
+              </button>
+            </div>
+          ) : (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <label className="cursor-pointer rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
+                Upload audio…
+                <input
+                  type="file"
+                  accept="audio/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0]
+                    e.target.value = ''
+                    if (!f) return
+                    if (f.size > 2.5 * 1024 * 1024) {
+                      alert('That file is over 2.5 MB — please use a shorter clip or a compressed MP3.')
+                      return
+                    }
+                    const r = new FileReader()
+                    r.onload = () => setConfig((c) => ({ ...c, music: String(r.result) }))
+                    r.readAsDataURL(f)
+                  }}
+                />
+              </label>
+              <span className="text-xs text-slate-400">or</span>
+              <input
+                placeholder="paste an audio URL (https://…)"
+                onBlur={(e) => {
+                  const v = e.target.value.trim()
+                  if (v) setConfig((c) => ({ ...c, music: v }))
+                }}
+                className="w-64 rounded border border-slate-300 px-2 py-1.5 text-xs"
+              />
+            </div>
+          )}
+          <label className="mt-3 flex items-center gap-2 text-sm text-slate-600">
+            <input
+              type="checkbox"
+              checked={config.auto_scroll ?? true}
+              onChange={(e) => setConfig((c) => ({ ...c, auto_scroll: e.target.checked }))}
+            />
+            Auto-play the story (slow scroll until they touch)
+          </label>
+        </div>
 
         <p className="text-xs text-slate-400">
           {formatDate(event.event_date)} · {venue?.name ?? '—'} — date & venue come from
