@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
 import { Cormorant_Garamond, Great_Vibes, Karla } from 'next/font/google'
 import { GUEST_THEME } from '@/app/(guest)/theme'
 import { DEFAULT_LETTER, formatDate } from '@/lib/invite'
@@ -45,13 +46,29 @@ export function InvitePreview({
   const previewEvent: WeddingEvent = { ...event, invite: config }
   const dateLine = formatDate(event.event_date)
 
+  // Scale the 390px-wide invite to EXACTLY fill the frame's inner width
+  const frameRef = useRef<HTMLDivElement>(null)
+  const [zoom, setZoom] = useState(0.85)
+  useEffect(() => {
+    const el = frameRef.current
+    if (!el) return
+    const fit = () => setZoom(el.clientWidth / 390)
+    fit()
+    const ro = new ResizeObserver(fit)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
   return (
     <div className={`${display.variable} ${body.variable} ${script.variable}`}>
       <style>{GUEST_THEME}</style>
       <div className="overflow-hidden rounded-[28px] border-[6px] border-slate-900 bg-slate-900 shadow-xl">
-        <div className="h-[600px] overflow-y-auto overscroll-contain rounded-[22px]">
+        <div
+          ref={frameRef}
+          className="h-[620px] overflow-y-auto overscroll-contain rounded-[22px]"
+        >
           {/* zoom keeps layout + scroll math consistent while miniaturizing */}
-          <div className={`gv-shell ${tplClass} pb-8`} style={{ width: 390, zoom: 0.8 }}>
+          <div className={`gv-shell ${tplClass} pb-8`} style={{ width: 390, zoom }}>
             <div className="pointer-events-none">
               {template === 'editorial' ? (
                 <EdHero
