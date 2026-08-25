@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { use, useCallback, useEffect, useMemo, useState } from 'react'
 import { getRepo } from '@/lib/repo'
 import { newTableId } from '@/lib/layout-ops'
@@ -28,6 +29,7 @@ export default function GuestsPage({
   params: Promise<{ eventId: string }>
 }) {
   const { eventId } = use(params)
+  const router = useRouter()
   const [event, setEvent] = useState<WeddingEvent | null>(null)
   const [guests, setGuests] = useState<Guest[]>([])
   const [constraints, setConstraints] = useState<GuestConstraint[]>([])
@@ -228,6 +230,14 @@ export default function GuestsPage({
           </button>
           {menu === 'invite' && (
             <div className="absolute left-0 top-full z-20 mt-1 w-64 rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
+              <MenuItem
+                label="Design the e-invite"
+                hint="Photos + details → the full experience"
+                onClick={() => {
+                  setMenu('')
+                  router.push(`/events/${eventId}/einvite`)
+                }}
+              />
               <MenuItem
                 label="Copy invite link"
                 hint="The full e-invitation — envelope, countdown, ballroom & RSVP"

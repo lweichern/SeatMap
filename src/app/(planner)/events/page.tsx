@@ -172,6 +172,7 @@ export default function EventsPage() {
                       [
                         ["Photos", "photos"],
                         ["Menu", "menu"],
+                        ["E-invite studio", "einvite"],
                         ["Kitchen sheet", "kitchen"],
                       ] as const
                     ).map(([label, path]) => (
