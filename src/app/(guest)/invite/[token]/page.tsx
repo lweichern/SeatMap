@@ -6,7 +6,6 @@ import { getRepo } from '@/lib/repo'
 import { peekToken, verifyToken } from '@/lib/token'
 import { monogram, formatDate, DEFAULT_LETTER } from '@/lib/invite'
 import { Flourish } from '@/components/guest/Flourish'
-import { Hall2D, type HallViewProps } from '@/components/guest/Hall2D'
 import { InviteEnvelope } from '@/components/invite/InviteEnvelope'
 import { InviteAudio, type InviteAudioHandle } from '@/components/invite/InviteAudio'
 import { useAutoScroll } from '@/components/invite/useAutoScroll'
@@ -18,17 +17,14 @@ import { InviteRedDuo } from '@/components/invite/InviteRedDuo'
 import { InviteCalendar } from '@/components/invite/InviteCalendar'
 import { InviteCountdown } from '@/components/invite/InviteCountdown'
 import { InviteDetails } from '@/components/invite/InviteDetails'
-import { InviteBallroom } from '@/components/invite/InviteBallroom'
 import { InviteMenu } from '@/components/invite/InviteMenu'
 import { InviteLetter } from '@/components/invite/InviteLetter'
 import { InviteRsvp } from '@/components/invite/InviteRsvp'
-import type { HallSceneProps } from '@/lib/scene-builder'
-import type { Venue, VenueTable, WeddingEvent } from '@/lib/types'
+import type { Venue, WeddingEvent } from '@/lib/types'
 
 interface Resolved {
   event: WeddingEvent
   venue: Venue
-  tables: VenueTable[]
   greetName: string | null
   prefill: { name?: string; phone?: string } | null
 }
@@ -80,13 +76,10 @@ export default function InvitePage({
           }
         }
 
-        const [venue, layout] = await Promise.all([
-          repo.getVenue(e.venue_id),
-          repo.getLayout(e.layout_id),
-        ])
+        const venue = await repo.getVenue(e.venue_id)
         if (!venue) return setData(null)
 
-        setData({ event: e, venue, tables: layout?.tables ?? [], greetName, prefill })
+        setData({ event: e, venue, greetName, prefill })
 
         // Reduced motion: initialize already-opened so an animating
         // envelope never mounts. Otherwise honor a prior open this session
@@ -136,34 +129,12 @@ export default function InvitePage({
     )
   }
 
-  const { event, venue, tables, greetName, prefill } = data
+  const { event, venue, greetName, prefill } = data
   // Absent/null until the Invite Studio has been used for this event — an
   // event with no config keeps the V1 page exactly as it always rendered;
   // every new prop/section below is gated on `cfg`.
   const cfg = event.invite ?? null
 
-  const sceneProps: HallSceneProps = {
-    walls: venue.walls,
-    door: venue.door,
-    doorWidthM: venue.door_width_m,
-    registration: venue.registration,
-    stage: venue.stage,
-    tables,
-    highlightTableId: null,
-    route: null,
-    fallbackSpan: { w: venue.width_m ?? 30, h: venue.height_m ?? 20 },
-  }
-  const hallProps: HallViewProps = {
-    widthM: venue.width_m ?? 40,
-    heightM: venue.height_m ?? 25,
-    walls: venue.walls,
-    door: venue.door,
-    doorWidthM: venue.door_width_m,
-    registration: venue.registration,
-    stage: venue.stage,
-    tables,
-    guestTableId: null,
-  }
 
   function handleOpen() {
     setOpened(true)
@@ -207,7 +178,7 @@ export default function InvitePage({
         {cfg && <InviteCalendar eventDate={event.event_date} backdrop={cfg.photos?.candid1} />}
         <InviteCountdown eventDate={event.event_date} />
         <InviteDetails event={event} venue={venue} startsAt={cfg ? event.starts_at : undefined} />
-        <InviteBallroom scene={sceneProps} fallback={<Hall2D {...hallProps} />} />
+        <InviteRsvp event={event} prefill={prefill} deadline={cfg?.rsvp_deadline} />
         <InviteMenu menu={event.menu ?? []} />
         {cfg && (
           <InviteLetter
@@ -215,7 +186,6 @@ export default function InvitePage({
             photos={{ candid1: cfg.photos?.candid1, candid2: cfg.photos?.candid2 }}
           />
         )}
-        <InviteRsvp event={event} prefill={prefill} deadline={cfg?.rsvp_deadline} />
         <footer className="py-16 text-center">
           <p className="gv-caps text-[11px] text-(--ink-faint)">SEATMAP</p>
         </footer>
