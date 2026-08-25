@@ -139,7 +139,7 @@ personalization, hard RSVP cutoff enforcement.
 - `InviteConfig.music?: string` (audio data URL or https URL) and
   `InviteConfig.auto_scroll?: boolean` (default true).
 - Studio gains: a **Music (optional)** tile — audio file upload (hard cap
-  2.5 MB, hint "MP3 · ≤2.5 MB · a 60–90s loop is perfect") stored as a data
+  5 MB, hint "MP3 · ≤5 MB · a 60–90s loop is perfect") stored as a data
   URL, or a paste-a-URL input; ✕ clears. A checkbox **"Auto-play the story
   (slow scroll until they touch)"**, default on. cleanConfig must preserve
   `auto_scroll: false` (an explicit off is not "empty").
@@ -153,7 +153,7 @@ personalization, hard RSVP cutoff enforcement.
   wheel/touch/pointer/key input; it also stops ~600 px before the document
   end so the RSVP form is reached at rest. Skipped entirely under
   prefers-reduced-motion or when `auto_scroll === false`.
-- No migration (jsonb). Known cost: a 2.5 MB file ≈ 3.4 MB base64 in the
+- No migration (jsonb). Known cost: a 5 MB file ≈ 6.8 MB base64 in the
   events row — worsens the listEvents payload backlog item; local-mode
   localStorage quota may reject saves with music (surfaced by the studio's
   save error alert). Storage-bucket follow-up unchanged.
