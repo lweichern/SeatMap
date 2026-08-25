@@ -5,6 +5,7 @@ import { use, useEffect, useState } from 'react'
 import { getRepo } from '@/lib/repo'
 import { resizeImage } from '@/lib/photos'
 import { InvitePreview } from '@/components/invite/InvitePreview'
+import { samplePhotos } from '@/components/invite/sampleConfig'
 import { signToken } from '@/lib/token'
 import { getShareOrigin } from '@/lib/share-origin'
 import { DEFAULT_LETTER, formatDate, splitCouple } from '@/lib/invite'
@@ -174,6 +175,7 @@ export default function EinvitePage({
   const [startsAt, setStartsAt] = useState('')
   const [existed, setExisted] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [sampleMode, setSampleMode] = useState(false)
   const [justCreated, setJustCreated] = useState(false)
   const [savedUrl, setSavedUrl] = useState<string | null>(null)
   const [copyNote, setCopyNote] = useState('')
@@ -546,7 +548,37 @@ export default function EinvitePage({
       {/* live phone preview of the draft config */}
       <aside className="mt-10 hidden lg:mt-0 lg:block">
         <div className="sticky top-6">
-          <InvitePreview config={config} event={event} venue={venue} />
+          <div className="mb-3 flex justify-center">
+            <div className="flex overflow-hidden rounded-full border border-slate-200 bg-white text-xs font-medium">
+              <button
+                onClick={() => setSampleMode(false)}
+                className={`px-3 py-1.5 transition-colors ${
+                  !sampleMode ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                Your photos
+              </button>
+              <button
+                onClick={() => setSampleMode(true)}
+                className={`px-3 py-1.5 transition-colors ${
+                  sampleMode ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                Sample photos
+              </button>
+            </div>
+          </div>
+          <InvitePreview
+            config={sampleMode ? { ...config, ...samplePhotos(config.template) } : config}
+            event={event}
+            venue={venue}
+          />
+          {sampleMode && (
+            <p className="mt-2 text-center text-[11px] text-slate-400">
+              Showing bundled sample photos — your draft is untouched and samples are
+              never saved.
+            </p>
+          )}
         </div>
       </aside>
     </div>
