@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { use, useEffect, useState } from 'react'
 import { getRepo } from '@/lib/repo'
 import { resizeImage } from '@/lib/photos'
+import { InvitePreview } from '@/components/invite/InvitePreview'
 import { signToken } from '@/lib/token'
 import { getShareOrigin } from '@/lib/share-origin'
 import { DEFAULT_LETTER, formatDate, splitCouple } from '@/lib/invite'
@@ -244,7 +245,8 @@ export default function EinvitePage({
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-6">
+    <div className="mx-auto max-w-6xl px-6 py-6 lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-10">
+      <div className="mx-auto w-full max-w-2xl">
       <div className="flex items-center gap-3">
         <Link href="/events" className="text-sm text-slate-400 hover:text-slate-700">
           ← Events
@@ -539,6 +541,14 @@ export default function EinvitePage({
           </p>
         </div>
       )}
+      </div>
+
+      {/* live phone preview of the draft config */}
+      <aside className="mt-10 hidden lg:mt-0 lg:block">
+        <div className="sticky top-6">
+          <InvitePreview config={config} event={event} venue={venue} />
+        </div>
+      </aside>
     </div>
   )
 }
