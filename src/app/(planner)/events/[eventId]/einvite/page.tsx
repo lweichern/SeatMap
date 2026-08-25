@@ -11,13 +11,46 @@ import type { InviteConfig, Venue, WeddingEvent } from '@/lib/types'
 
 type PhotoKey = keyof NonNullable<InviteConfig['photos']>
 
-const SLOTS: { key: PhotoKey; title: string; hint: string; tall?: boolean }[] = [
-  { key: 'hero', title: 'Hero — the two of you', hint: 'Portrait · opens the invite', tall: true },
-  { key: 'bride', title: 'Bride portrait', hint: "the 'her' moment", tall: true },
-  { key: 'groom', title: 'Groom portrait', hint: "the 'him' moment", tall: true },
-  { key: 'editorial', title: 'Editorial favourite', hint: 'the invitation line' },
-  { key: 'candid1', title: 'Candid 1', hint: 'the letter' },
-  { key: 'candid2', title: 'Candid 2', hint: 'the letter' },
+const SLOTS: { key: PhotoKey; title: string; hint: string; dims: string; tall?: boolean }[] = [
+  {
+    key: 'hero',
+    title: 'Hero — the two of you',
+    hint: 'opens the invite full-screen',
+    dims: 'portrait 4:5 · ≥1080×1350 (Scrapbook crops the centre square)',
+    tall: true,
+  },
+  {
+    key: 'bride',
+    title: 'Bride portrait',
+    hint: "the 'her' moment",
+    dims: 'portrait 3:4 · ≥1080×1440',
+    tall: true,
+  },
+  {
+    key: 'groom',
+    title: 'Groom portrait',
+    hint: "the 'him' moment",
+    dims: 'portrait 3:4 · ≥1080×1440',
+    tall: true,
+  },
+  {
+    key: 'editorial',
+    title: 'Editorial favourite',
+    hint: 'the invitation line (Golden Letter)',
+    dims: 'portrait 3:4 · ≥1080×1440',
+  },
+  {
+    key: 'candid1',
+    title: 'Candid 1',
+    hint: 'the letter + calendar backdrop',
+    dims: 'square-ish · ≥800×800',
+  },
+  {
+    key: 'candid2',
+    title: 'Candid 2',
+    hint: 'the letter',
+    dims: 'any shape · ≥800px wide',
+  },
 ]
 
 /** Drops empty strings, empty letter arrays, and a photos object with no keys. */
@@ -44,12 +77,14 @@ function cleanConfig(cfg: InviteConfig): InviteConfig {
 function PhotoSlot({
   title,
   hint,
+  dims,
   tall,
   photo,
   onChange,
 }: {
   title: string
   hint: string
+  dims?: string
   tall?: boolean
   photo?: string
   onChange: (photo: string | undefined) => void
@@ -110,6 +145,11 @@ function PhotoSlot({
         <>
           <span className="text-sm font-medium text-slate-700">{title}</span>
           <span className="mt-1 text-xs text-slate-400">{hint}</span>
+          {dims && (
+            <span className="mt-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500">
+              {dims}
+            </span>
+          )}
         </>
       )}
     </label>
@@ -279,6 +319,7 @@ export default function EinvitePage({
             key={slot.key}
             title={slot.title}
             hint={slot.hint}
+            dims={slot.dims}
             tall={slot.tall}
             photo={config.photos?.[slot.key]}
             onChange={(photo) => setPhoto(slot.key, photo)}
@@ -292,7 +333,7 @@ export default function EinvitePage({
           <p className="text-xs font-medium text-slate-500">Gallery (up to 6)</p>
           <p className="text-[11px] text-slate-400">
             Extra shots for the Editorial swipe strip / Scrapbook polaroids. Golden Letter
-            ignores these.
+            ignores these. Best: portrait 3:4, ≥900×1200 (Scrapbook shows the centre square).
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             {(config.gallery ?? []).map((src, i) => (
