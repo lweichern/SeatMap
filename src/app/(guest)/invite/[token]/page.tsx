@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useEffect, useState, type ReactNode } from 'react'
+import { use, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { getRepo } from '@/lib/repo'
 import { peekToken, verifyToken } from '@/lib/token'
@@ -8,6 +8,8 @@ import { monogram, formatDate, DEFAULT_LETTER } from '@/lib/invite'
 import { Flourish } from '@/components/guest/Flourish'
 import { Hall2D, type HallViewProps } from '@/components/guest/Hall2D'
 import { InviteEnvelope } from '@/components/invite/InviteEnvelope'
+import { InviteAudio, type InviteAudioHandle } from '@/components/invite/InviteAudio'
+import { useAutoScroll } from '@/components/invite/useAutoScroll'
 import { InviteParticles } from '@/components/invite/InviteParticles'
 import { InviteHero } from '@/components/invite/InviteHero'
 import { InviteEditorial } from '@/components/invite/InviteEditorial'
@@ -48,6 +50,7 @@ export default function InvitePage({
   const search = useSearchParams()
   const [data, setData] = useState<Resolved | null | 'loading'>('loading')
   const [opened, setOpened] = useState(false)
+  const audioRef = useRef<InviteAudioHandle>(null)
 
   useEffect(() => {
     ;(async () => {
@@ -96,6 +99,12 @@ export default function InvitePage({
       }
     })()
   }, [token, search])
+
+  // Hook must run unconditionally (before the early returns below); it
+  // no-ops until the invitation is open and configured for auto-scroll.
+  const loadedCfg =
+    data !== 'loading' && data ? (data.event.invite ?? null) : null
+  useAutoScroll(opened && !!loadedCfg && (loadedCfg.auto_scroll ?? true))
 
   if (data === 'loading') {
     return (
@@ -167,10 +176,12 @@ export default function InvitePage({
           monogram={monogram(event.couple_names)}
           opened={opened}
           onOpen={handleOpen}
+          onTap={() => audioRef.current?.start()}
         />
       )}
       <div className={!opened ? 'h-[100svh] overflow-hidden' : undefined}>
         <InviteParticles />
+        {cfg?.music && <InviteAudio ref={audioRef} src={cfg.music} />}
         <InviteHero
           coupleNames={event.couple_names}
           dateLine={formatDate(event.event_date)}

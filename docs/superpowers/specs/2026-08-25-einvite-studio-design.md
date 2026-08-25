@@ -133,3 +133,27 @@ are pure CSS; per-second countdown pauses on `document.hidden`.
 
 Music, Supabase Storage (noted), wishes wall, per-guest photo
 personalization, hard RSVP cutoff enforcement.
+
+## Addendum (2026-08-25): Music + auto-played story
+
+- `InviteConfig.music?: string` (audio data URL or https URL) and
+  `InviteConfig.auto_scroll?: boolean` (default true).
+- Studio gains: a **Music (optional)** tile — audio file upload (hard cap
+  2.5 MB, hint "MP3 · ≤2.5 MB · a 60–90s loop is perfect") stored as a data
+  URL, or a paste-a-URL input; ✕ clears. A checkbox **"Auto-play the story
+  (slow scroll until they touch)"**, default on. cleanConfig must preserve
+  `auto_scroll: false` (an explicit off is not "empty").
+- Guest `/invite`: when `cfg.music` exists, the envelope tap (user gesture)
+  starts a looping `<audio>`; a floating disc toggle (top-right, gold ring,
+  ♪, CSS spin while playing; reduced-motion: no spin) pauses/resumes. Music
+  keeps playing while scrolling; no autoplay without the tap (browser
+  policy), so the sealed envelope shows no audio UI.
+- Auto-scroll: ~1.8 s after opening, the page scrolls itself at a gentle
+  reading pace (~55 px/s, rAF-driven) and cancels PERMANENTLY on the first
+  wheel/touch/pointer/key input; it also stops ~600 px before the document
+  end so the RSVP form is reached at rest. Skipped entirely under
+  prefers-reduced-motion or when `auto_scroll === false`.
+- No migration (jsonb). Known cost: a 2.5 MB file ≈ 3.4 MB base64 in the
+  events row — worsens the listEvents payload backlog item; local-mode
+  localStorage quota may reject saves with music (surfaced by the studio's
+  save error alert). Storage-bucket follow-up unchanged.

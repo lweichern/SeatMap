@@ -135,7 +135,11 @@ export interface MenuItem {
 export interface InviteConfig {
   bride_name?: string
   groom_name?: string
-  rsvp_deadline?: string // ISO date
+  rsvp_deadline?: string
+  /** Audio data URL or https URL; loops after the envelope tap. */
+  music?: string
+  /** Gentle self-scroll after opening until the guest touches. Default true. */
+  auto_scroll?: boolean
   letter?: string[]
   red_accent?: boolean
   photos?: {

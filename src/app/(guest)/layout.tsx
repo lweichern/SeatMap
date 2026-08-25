@@ -89,7 +89,10 @@ const THEME = `
 .gv-draw line, .gv-draw rect{ stroke-dasharray:200; stroke-dashoffset:200; animation:gvDraw 1.6s .2s ease forwards; }
 @keyframes gvDraw{ to{ stroke-dashoffset:0 } }
 
+.gv-spin{ animation:gvSpin 3.5s linear infinite; }
+@keyframes gvSpin{ to{ transform:rotate(360deg) } }
 @media (prefers-reduced-motion: reduce){
+  .gv-spin{ animation:none; }
   .gv-rise{ animation-duration:.01s; }
   .gv-io{ opacity:1; transform:none; transition:none }
   .gv-draw line,.gv-draw rect{ animation:none; stroke-dashoffset:0 }
