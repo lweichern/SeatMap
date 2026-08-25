@@ -19,6 +19,7 @@ import { InviteCountdown } from '@/components/invite/InviteCountdown'
 import { InviteDetails } from '@/components/invite/InviteDetails'
 import { InviteLetter } from '@/components/invite/InviteLetter'
 import { InviteRsvp } from '@/components/invite/InviteRsvp'
+import { EdHero, EdSplit, EdStrip, PolHero, PolDuo, PolGallery } from '@/components/invite/templates'
 import type { Venue, WeddingEvent } from '@/lib/types'
 
 interface Resolved {
@@ -133,6 +134,8 @@ export default function InvitePage({
   // event with no config keeps the V1 page exactly as it always rendered;
   // every new prop/section below is gated on `cfg`.
   const cfg = event.invite ?? null
+  const template = cfg?.template ?? 'classic'
+  const gallery = (cfg?.gallery ?? []).filter(Boolean)
 
 
   function handleOpen() {
@@ -144,7 +147,12 @@ export default function InvitePage({
   }
 
   return (
-    <Shell locked={!opened}>
+    <Shell
+      locked={!opened}
+      templateClass={
+        template === 'editorial' ? 'gv-t-editorial' : template === 'polaroid' ? 'gv-t-polaroid' : ''
+      }
+    >
       {!opened && (
         <InviteEnvelope
           monogram={monogram(event.couple_names)}
@@ -156,23 +164,63 @@ export default function InvitePage({
       <div className={!opened ? 'h-[100svh] overflow-hidden' : undefined}>
         <InviteParticles />
         {cfg?.music && <InviteAudio ref={audioRef} src={cfg.music} revealed={opened} />}
-        <InviteHero
-          coupleNames={event.couple_names}
-          dateLine={formatDate(event.event_date)}
-          greetName={greetName}
-          photo={cfg?.photos?.hero}
-        />
-        {cfg && <InviteEditorial photo={cfg.photos?.editorial} />}
-        {cfg && (
-          <InviteNames
-            bride={cfg.bride_name}
-            groom={cfg.groom_name}
-            bridePhoto={cfg.photos?.bride}
-            groomPhoto={cfg.photos?.groom}
+        {template === 'editorial' ? (
+          <EdHero
+            coupleNames={event.couple_names}
+            dateLine={formatDate(event.event_date)}
+            greetName={greetName}
+            photo={cfg?.photos?.hero}
+          />
+        ) : template === 'polaroid' ? (
+          <PolHero
+            coupleNames={event.couple_names}
+            dateLine={formatDate(event.event_date)}
+            greetName={greetName}
+            photo={cfg?.photos?.hero}
+          />
+        ) : (
+          <InviteHero
+            coupleNames={event.couple_names}
+            dateLine={formatDate(event.event_date)}
+            greetName={greetName}
+            photo={cfg?.photos?.hero}
           />
         )}
-        {cfg && (cfg.red_accent ?? true) && (
-          <InviteRedDuo bridePhoto={cfg.photos?.bride} groomPhoto={cfg.photos?.groom} />
+        {cfg && template === 'editorial' && (
+          <>
+            <EdSplit
+              bride={cfg.bride_name}
+              groom={cfg.groom_name}
+              bridePhoto={cfg.photos?.bride}
+              groomPhoto={cfg.photos?.groom}
+            />
+            <EdStrip photos={gallery} />
+          </>
+        )}
+        {cfg && template === 'polaroid' && (
+          <>
+            <PolDuo
+              bride={cfg.bride_name}
+              groom={cfg.groom_name}
+              bridePhoto={cfg.photos?.bride}
+              groomPhoto={cfg.photos?.groom}
+            />
+            <PolGallery photos={gallery} />
+          </>
+        )}
+        {cfg && template === 'classic' && (
+          <>
+            <InviteEditorial photo={cfg.photos?.editorial} />
+            <InviteNames
+              bride={cfg.bride_name}
+              groom={cfg.groom_name}
+              bridePhoto={cfg.photos?.bride}
+              groomPhoto={cfg.photos?.groom}
+            />
+            {(cfg.red_accent ?? true) && (
+              <InviteRedDuo bridePhoto={cfg.photos?.bride} groomPhoto={cfg.photos?.groom} />
+            )}
+          </>
         )}
         {cfg && <InviteCalendar eventDate={event.event_date} backdrop={cfg.photos?.candid1} />}
         <InviteCountdown eventDate={event.event_date} />
@@ -192,11 +240,21 @@ export default function InvitePage({
   )
 }
 
-function Shell({ children, locked }: { children: ReactNode; locked?: boolean }) {
+function Shell({
+  children,
+  locked,
+  templateClass = '',
+}: {
+  children: ReactNode
+  locked?: boolean
+  templateClass?: string
+}) {
   // locked (envelope still sealed): no bottom padding + clipped height, so
   // the page cannot rubber-band even a pixel behind the envelope
   return (
-    <div className={`gv-shell ${locked ? 'h-[100svh] overflow-hidden pb-0' : 'pb-12'}`}>
+    <div
+      className={`gv-shell ${templateClass} ${locked ? 'h-[100svh] overflow-hidden pb-0' : 'pb-12'}`}
+    >
       {children}
     </div>
   )

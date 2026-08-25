@@ -7,7 +7,7 @@ import { useReveal } from './useReveal'
 /** Gold-gradient pill, matching the RSVP page's primary action buttons. */
 const BUTTON =
   'flex min-h-11 flex-1 items-center justify-center rounded-full px-3 text-center text-sm font-semibold text-[#fffdf6] shadow-[0_10px_22px_-12px_rgba(140,105,35,.6)] transition-transform active:scale-[.98]'
-const BUTTON_STYLE = { background: 'linear-gradient(165deg,#c5a04a,#8a6a1f)' }
+const BUTTON_STYLE = { background: 'linear-gradient(165deg, var(--gold), var(--gold-deep))' }
 
 /** "2026-09-12T19:00:00" → "7:00 PM"; anything without a `T(\d\d):(\d\d)` → null. */
 function formatStartTime(startsAt?: string | null): string | null {

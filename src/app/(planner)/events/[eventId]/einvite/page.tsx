@@ -32,6 +32,8 @@ function cleanConfig(cfg: InviteConfig): InviteConfig {
     rsvp_deadline: cfg.rsvp_deadline || undefined,
     letter: letter.length > 0 ? letter : undefined,
     red_accent: cfg.red_accent,
+    template: cfg.template && cfg.template !== 'classic' ? cfg.template : undefined,
+    gallery: (cfg.gallery ?? []).filter(Boolean).length > 0 ? (cfg.gallery ?? []).filter(Boolean) : undefined,
     music: cfg.music || undefined,
     auto_scroll: cfg.auto_scroll, // explicit false must survive
     photos: photoEntries.length > 0 ? Object.fromEntries(photoEntries) : undefined,
@@ -216,6 +218,61 @@ export default function EinvitePage({
         becomes your full photo story.
       </p>
 
+      {/* template picker */}
+      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {(
+          [
+            {
+              key: 'classic',
+              name: 'Golden Letter',
+              vibe: 'ivory · gold · serif',
+              sw: ['#faf5ea', '#a8842c', '#392e1e'],
+              uses: 'Hero, Bride, Groom, Editorial + 2 candids',
+            },
+            {
+              key: 'editorial',
+              name: 'Midnight Editorial',
+              vibe: 'espresso · champagne · magazine',
+              sw: ['#131110', '#d3b465', '#f0e7d8'],
+              uses: 'Hero, Bride, Groom + up to 6 gallery shots',
+            },
+            {
+              key: 'polaroid',
+              name: 'Sunday Scrapbook',
+              vibe: 'blush · rose · polaroids',
+              sw: ['#fbf2ec', '#bb5f72', '#46352c'],
+              uses: 'Hero, Bride, Groom + gallery polaroids',
+            },
+          ] as const
+        ).map((t) => {
+          const active = (config.template ?? 'classic') === t.key
+          return (
+            <button
+              key={t.key}
+              onClick={() => setConfig((c) => ({ ...c, template: t.key }))}
+              className={`rounded-lg border p-3 text-left transition-colors ${
+                active
+                  ? 'border-slate-900 bg-white ring-1 ring-slate-900'
+                  : 'border-slate-200 bg-white hover:border-slate-400'
+              }`}
+            >
+              <span className="flex gap-1">
+                {t.sw.map((c) => (
+                  <span
+                    key={c}
+                    className="h-4 w-4 rounded-full border border-black/10"
+                    style={{ background: c }}
+                  />
+                ))}
+              </span>
+              <span className="mt-2 block text-sm font-semibold text-slate-900">{t.name}</span>
+              <span className="block text-[11px] text-slate-400">{t.vibe}</span>
+              <span className="mt-1 block text-[11px] text-slate-500">Uses: {t.uses}</span>
+            </button>
+          )
+        })}
+      </div>
+
       <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3">
         {SLOTS.map((slot) => (
           <PhotoSlot
@@ -230,6 +287,57 @@ export default function EinvitePage({
       </div>
 
       <div className="mt-8 space-y-4 rounded-lg border border-slate-200 bg-white p-4">
+        {/* gallery (Editorial strip / Scrapbook polaroids) */}
+        <div className="rounded-lg border border-slate-200 bg-white p-3">
+          <p className="text-xs font-medium text-slate-500">Gallery (up to 6)</p>
+          <p className="text-[11px] text-slate-400">
+            Extra shots for the Editorial swipe strip / Scrapbook polaroids. Golden Letter
+            ignores these.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {(config.gallery ?? []).map((src, i) => (
+              <div key={i} className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src} alt="" className="h-20 w-20 rounded object-cover" />
+                <button
+                  onClick={() =>
+                    setConfig((c) => ({
+                      ...c,
+                      gallery: (c.gallery ?? []).filter((_, j) => j !== i),
+                    }))
+                  }
+                  className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 bg-white text-[10px] text-slate-500 shadow hover:text-red-600"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+            {(config.gallery ?? []).length < 6 && (
+              <label className="flex h-20 w-20 cursor-pointer items-center justify-center rounded border border-dashed border-slate-300 text-2xl text-slate-300 hover:border-slate-400 hover:text-slate-400">
+                +
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={async (e) => {
+                    const files = Array.from(e.target.files ?? [])
+                    e.target.value = ''
+                    for (const f of files) {
+                      const url = await resizeImage(f, 1200)
+                      setConfig((c) =>
+                        (c.gallery ?? []).length >= 6
+                          ? c
+                          : { ...c, gallery: [...(c.gallery ?? []), url] },
+                      )
+                    }
+                  }}
+                />
+              </label>
+            )}
+          </div>
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
             <span className="mb-1 block text-xs font-medium text-slate-500">Bride&apos;s name</span>

@@ -85,14 +85,14 @@ export function InviteEnvelope({
       {/* envelope body */}
       <div
         className="absolute inset-6 rounded-2xl border border-(--line)"
-        style={{ background: 'linear-gradient(165deg,#fffdf6,#f1e3c4)' }}
+        style={{ background: 'linear-gradient(165deg, var(--card), var(--gold-soft))' }}
         aria-hidden
       />
       {/* flap — lifts open on tap */}
       <div
         className="gv-env-flap absolute inset-x-6 top-6 h-[42%] rounded-t-2xl"
         style={{
-          background: 'linear-gradient(165deg,#f6ead0,#dcc182)',
+          background: 'linear-gradient(165deg, var(--gold-soft), var(--gold))',
           clipPath: 'polygon(0 0, 100% 0, 50% 100%)',
         }}
         aria-hidden
