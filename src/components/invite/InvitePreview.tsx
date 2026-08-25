@@ -102,16 +102,29 @@ export function InvitePreview({
   // Music (when the config carries a track): tap-to-play over the frame.
   const audioRef = useRef<HTMLAudioElement>(null)
   const [playing, setPlaying] = useState(false)
+  const [musicNote, setMusicNote] = useState('')
   useEffect(() => {
     // track changed (e.g. sample mode toggled) — reset
     setPlaying(false)
+    setMusicNote('')
     audioRef.current?.pause()
   }, [config.music])
   const toggleMusic = () => {
     const a = audioRef.current
     if (!a) return
-    if (a.paused) a.play().then(() => setPlaying(true)).catch(() => setPlaying(false))
-    else {
+    if (a.paused) {
+      a.play()
+        .then(() => {
+          setPlaying(true)
+          setMusicNote('')
+        })
+        .catch(() => {
+          setPlaying(false)
+          setMusicNote(
+            "Track unavailable on this site — sample music isn't published with the app; upload your own in the Music section below.",
+          )
+        })
+    } else {
       a.pause()
       setPlaying(false)
     }
@@ -221,6 +234,9 @@ export function InvitePreview({
       <p className="mt-2 text-center text-[11px] text-slate-400">
         Live preview · updates as you edit · scroll inside the phone
       </p>
+      {musicNote && (
+        <p className="mt-1 text-center text-[11px] text-amber-600">{musicNote}</p>
+      )}
     </div>
   )
 }
