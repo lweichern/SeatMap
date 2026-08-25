@@ -131,6 +131,23 @@ export interface MenuItem {
   photo?: string | null
 }
 
+/** E-invite copy/theme/photo configuration for the Invite Studio. */
+export interface InviteConfig {
+  bride_name?: string
+  groom_name?: string
+  rsvp_deadline?: string // ISO date
+  letter?: string[]
+  red_accent?: boolean
+  photos?: {
+    hero?: string
+    bride?: string
+    groom?: string
+    editorial?: string
+    candid1?: string
+    candid2?: string
+  }
+}
+
 export interface WeddingEvent {
   id: string
   org_id: string
@@ -143,6 +160,8 @@ export interface WeddingEvent {
   guest_token_secret: string
   /** Courses served that night, in order. */
   menu: MenuItem[]
+  /** E-invite configuration; absent/null until Invite Studio is used. */
+  invite?: InviteConfig | null
 }
 
 export type GuestSide = 'bride' | 'groom' | 'both'

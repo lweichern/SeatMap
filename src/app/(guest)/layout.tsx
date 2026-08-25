@@ -1,4 +1,4 @@
-import { Cormorant_Garamond, Karla } from 'next/font/google'
+import { Cormorant_Garamond, Great_Vibes, Karla } from 'next/font/google'
 import type { ReactNode } from 'react'
 
 /**
@@ -18,6 +18,12 @@ const body = Karla({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-body',
+})
+
+const script = Great_Vibes({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-script',
 })
 
 const THEME = `
@@ -41,6 +47,9 @@ const THEME = `
 }
 .gv-shell>*{ position:relative; z-index:1; }
 .gv-display{ font-family:var(--font-display),Georgia,'Times New Roman',serif; }
+.gv-script{ font-family:var(--font-script),cursive; }
+.gv-feather-b{ -webkit-mask-image:linear-gradient(to bottom,#000 72%,transparent); mask-image:linear-gradient(to bottom,#000 72%,transparent); }
+.gv-feather-y{ -webkit-mask-image:linear-gradient(to bottom,transparent,#000 8%,#000 92%,transparent); mask-image:linear-gradient(to bottom,transparent,#000 8%,#000 92%,transparent); }
 .gv-caps{ letter-spacing:.24em; text-transform:uppercase; font-weight:600; }
 .gv-tablenum{
   font-family:var(--font-display),Georgia,serif;
@@ -89,7 +98,7 @@ const THEME = `
 
 export default function GuestLayout({ children }: { children: ReactNode }) {
   return (
-    <div className={`${display.variable} ${body.variable}`}>
+    <div className={`${display.variable} ${body.variable} ${script.variable}`}>
       <style>{THEME}</style>
       {children}
     </div>
