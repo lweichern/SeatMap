@@ -164,8 +164,6 @@ export default function InvitePage({
 
   function handleOpen() {
     setOpened(true)
-    // inside the tap gesture — the only moment browsers allow audio to start
-    audioRef.current?.start()
     try {
       sessionStorage.setItem(`invite.opened.${event.id}`, '1')
     } catch {}
@@ -178,6 +176,7 @@ export default function InvitePage({
           monogram={monogram(event.couple_names)}
           opened={opened}
           onOpen={handleOpen}
+          onTap={() => audioRef.current?.start()}
         />
       )}
       <div className={!opened ? 'h-[100svh] overflow-hidden' : undefined}>

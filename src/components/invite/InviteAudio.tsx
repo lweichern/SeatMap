@@ -46,7 +46,7 @@ export const InviteAudio = forwardRef<InviteAudioHandle, { src: string }>(
     return (
       <>
         {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-        <audio ref={audioRef} src={src} loop preload="auto" />
+        <audio ref={audioRef} src={src} loop preload="none" />
         {started && (
           <button
             onClick={toggle}
@@ -54,8 +54,8 @@ export const InviteAudio = forwardRef<InviteAudioHandle, { src: string }>(
             className="fixed right-3 top-3 z-30 flex h-11 w-11 items-center justify-center rounded-full border border-(--gold-soft) bg-(--card)/90 text-lg text-(--gold) shadow-md backdrop-blur-sm"
           >
             {/* spin the glyph, not the button — geometry stays stable for taps */}
-            <span className={playing ? 'gv-spin inline-block' : 'inline-block'}>
-              {playing ? '♪' : '♪̸'}
+            <span className={playing ? 'gv-spin inline-block' : 'inline-block opacity-40'}>
+              ♪
             </span>
           </button>
         )}

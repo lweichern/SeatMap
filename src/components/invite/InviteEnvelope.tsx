@@ -17,10 +17,14 @@ export function InviteEnvelope({
   monogram,
   opened,
   onOpen,
+  onTap,
 }: {
   monogram: string
   opened: boolean
   onOpen: () => void
+  /** Fired SYNCHRONOUSLY inside the tap gesture (before any animation) —
+   *  the only moment Safari lets audio start. */
+  onTap?: () => void
 }) {
   const [opening, setOpening] = useState(false)
   const firedRef = useRef(false)
@@ -52,6 +56,7 @@ export function InviteEnvelope({
   if (opened) return null
 
   function open() {
+    onTap?.()
     if (opening) return
     setOpening(true)
   }
