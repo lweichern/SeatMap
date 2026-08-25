@@ -70,7 +70,7 @@ const THEME = `
   position:relative;
   width:80px; height:80px; border-radius:50%;
   display:flex; align-items:center; justify-content:center;
-  background:radial-gradient(120% 120% at 32% 26%, #ecc86e 0%, #b3862f 55%, #7d5f1a 100%);
+  background:radial-gradient(120% 120% at 32% 26%, var(--gold-soft) 0%, var(--gold) 55%, var(--gold-deep) 100%);
   box-shadow:0 12px 26px -10px rgba(125,95,26,.55), inset 0 2px 4px rgba(255,255,255,.35), inset 0 -3px 7px rgba(0,0,0,.25);
 }
 .gv-seal::before{
@@ -89,6 +89,37 @@ const THEME = `
 .gv-draw line, .gv-draw rect{ stroke-dasharray:200; stroke-dashoffset:200; animation:gvDraw 1.6s .2s ease forwards; }
 @keyframes gvDraw{ to{ stroke-dashoffset:0 } }
 
+/* ---- template: Midnight Editorial — espresso paper, champagne ink ---- */
+.gv-t-editorial{
+  --ivory:#131110; --card:#1d1916;
+  --ink:#f0e7d8; --ink-soft:#c9bb9c; --ink-faint:#8a7d64;
+  --gold:#d3b465; --gold-deep:#a8842c; --gold-soft:#6d5c35; --line:#332d24;
+  background:
+    radial-gradient(130% 55% at 50% -10%, #241e16 0%, rgba(36,30,22,0) 60%),
+    radial-gradient(120% 45% at 50% 112%, #1d1812 0%, rgba(29,24,18,0) 55%),
+    var(--ivory);
+}
+/* ---- template: Sunday Scrapbook — blush paper, rose accent ---- */
+.gv-t-polaroid{
+  --ivory:#fbf2ec; --card:#ffffff;
+  --ink:#46352c; --ink-soft:#7d685c; --ink-faint:#ab9689;
+  --gold:#bb5f72; --gold-deep:#96455a; --gold-soft:#ecc8d0; --line:#f0ded6;
+  background:
+    radial-gradient(130% 55% at 50% -10%, #fde8dd 0%, rgba(253,232,221,0) 60%),
+    radial-gradient(120% 45% at 50% 112%, #f9e0da 0%, rgba(249,224,218,0) 55%),
+    var(--ivory);
+}
+.gv-polaroid{
+  background:#fff; padding:12px 12px 44px; border-radius:2px;
+  box-shadow:0 14px 34px -14px rgba(90,50,40,.35);
+}
+.gv-t-editorial .gv-polaroid{ background:#221d19; box-shadow:0 14px 34px -14px rgba(0,0,0,.6); }
+.gv-tape{
+  position:absolute; width:86px; height:26px; background:rgba(238,222,180,.75);
+  box-shadow:0 1px 3px rgba(0,0,0,.12); transform:rotate(-4deg);
+}
+.gv-snap{ scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; }
+.gv-snap > *{ scroll-snap-align:center; }
 .gv-spin{ animation:gvSpin 3.5s linear infinite; }
 @keyframes gvSpin{ to{ transform:rotate(360deg) } }
 @media (prefers-reduced-motion: reduce){

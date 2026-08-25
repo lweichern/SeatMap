@@ -203,7 +203,7 @@ export function InviteRsvp({
               }`}
               style={
                 form.attending === val
-                  ? { background: 'linear-gradient(165deg,#c5a04a,#8a6a1f)' }
+                  ? { background: 'linear-gradient(165deg, var(--gold), var(--gold-deep))' }
                   : undefined
               }
             >
@@ -216,7 +216,7 @@ export function InviteRsvp({
           onClick={submit}
           disabled={busy || !form.name.trim()}
           className="mt-2 w-full rounded-full py-3.5 text-base font-bold text-[#fffdf6] shadow-[0_16px_32px_-14px_rgba(140,105,35,.55)] transition-transform active:scale-[.98] disabled:opacity-50"
-          style={{ background: 'linear-gradient(165deg,#b3903f,#7d5f1a)' }}
+          style={{ background: 'linear-gradient(165deg, var(--gold), var(--gold-deep))' }}
         >
           {busy ? 'Sending…' : 'Send RSVP'}
         </button>
