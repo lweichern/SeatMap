@@ -89,6 +89,7 @@ create table events (
     check (photo_mode in ('live_feed', 'moderated_only', 'off')),
   guest_token_secret text not null default gen_random_uuid()::text,
   menu jsonb not null default '[]'::jsonb,          -- [{id,name,description}] serving order
+  invite jsonb,                                     -- {bride_name,groom_name,rsvp_deadline,letter,red_accent,photos}
   created_at timestamptz not null default now()
 );
 
@@ -230,3 +231,6 @@ on conflict (id) do nothing;
 
 -- 0003: dietary capture
 alter table guests add column if not exists dietary jsonb;
+
+-- 0004: invite studio configuration
+alter table events add column if not exists invite jsonb;
