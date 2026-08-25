@@ -129,6 +129,7 @@ export default function EinvitePage({
   const [startsAt, setStartsAt] = useState('')
   const [existed, setExisted] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [justCreated, setJustCreated] = useState(false)
   const [savedUrl, setSavedUrl] = useState<string | null>(null)
   const [copyNote, setCopyNote] = useState('')
 
@@ -165,6 +166,7 @@ export default function EinvitePage({
     if (!event) return
     setSaving(true)
     setSavedUrl(null)
+    const wasUpdate = existed
     try {
       const cleaned = cleanConfig(config)
       const starts_at = startsAt ? `${event.event_date}T${startsAt}:00` : event.starts_at
@@ -172,8 +174,11 @@ export default function EinvitePage({
       await getRepo().saveEvent(nextEvent)
       setEvent(nextEvent)
       setExisted(true)
+      setJustCreated(!wasUpdate)
       const token = await signToken(nextEvent.id, 'rsvp', nextEvent.guest_token_secret)
       setSavedUrl(`${await getShareOrigin()}/invite/${token}`)
+    } catch (e) {
+      alert(`Couldn't save the e-invite: ${(e as { message?: string })?.message ?? e}`)
     } finally {
       setSaving(false)
     }
@@ -301,7 +306,7 @@ export default function EinvitePage({
       {savedUrl && (
         <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
           <p className="text-sm font-medium text-emerald-800">
-            {existed ? 'E-invite updated ✓' : 'E-invite created ✓'}
+            {justCreated ? 'E-invite created ✓' : 'E-invite updated ✓'}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <button
