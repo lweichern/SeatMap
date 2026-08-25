@@ -119,11 +119,11 @@ export function InvitePreview({
               {venue && (
                 <InviteDetails event={previewEvent} venue={venue} startsAt={event.starts_at} />
               )}
-              <InviteRsvp event={previewEvent} prefill={null} deadline={config.rsvp_deadline} />
               <InviteLetter
                 lines={config.letter ?? DEFAULT_LETTER}
                 photos={{ candid1: config.photos?.candid1, candid2: config.photos?.candid2 }}
               />
+              <InviteRsvp event={previewEvent} prefill={null} deadline={config.rsvp_deadline} />
               <footer className="py-10 text-center">
                 <p className="gv-caps text-[11px] text-(--ink-faint)">SEATMAP</p>
               </footer>
