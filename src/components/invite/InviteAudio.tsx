@@ -11,8 +11,14 @@ export interface InviteAudioHandle {
  * Looping background music with a floating disc toggle. Playback only ever
  * starts from the envelope tap (a real user gesture) — never on load.
  */
-export const InviteAudio = forwardRef<InviteAudioHandle, { src: string }>(
-  function InviteAudio({ src }, ref) {
+export const InviteAudio = forwardRef<
+  InviteAudioHandle,
+  { src: string; revealed?: boolean }
+>(
+  /** `revealed`: show the disc even when playback never auto-started —
+   *  e.g. a refreshed page where the envelope stays open and the guest
+   *  needs a tap target to bring the music back. */
+  function InviteAudio({ src, revealed }, ref) {
     const audioRef = useRef<HTMLAudioElement>(null)
     const [playing, setPlaying] = useState(false)
     const [started, setStarted] = useState(false)
@@ -47,7 +53,7 @@ export const InviteAudio = forwardRef<InviteAudioHandle, { src: string }>(
       <>
         {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
         <audio ref={audioRef} src={src} loop preload="none" />
-        {started && (
+        {(started || revealed) && (
           <button
             onClick={toggle}
             aria-label={playing ? 'Pause music' : 'Play music'}

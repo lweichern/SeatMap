@@ -51,6 +51,9 @@ export default function InvitePage({
   const [data, setData] = useState<Resolved | null | 'loading'>('loading')
   const [opened, setOpened] = useState(false)
   const audioRef = useRef<InviteAudioHandle>(null)
+  // True only when the envelope was tapped THIS page load — a refresh that
+  // restores the opened state must not replay the auto-scroll performance.
+  const [justOpened, setJustOpened] = useState(false)
 
   useEffect(() => {
     ;(async () => {
@@ -104,7 +107,7 @@ export default function InvitePage({
   // no-ops until the invitation is open and configured for auto-scroll.
   const loadedCfg =
     data !== 'loading' && data ? (data.event.invite ?? null) : null
-  useAutoScroll(opened && !!loadedCfg && (loadedCfg.auto_scroll ?? true))
+  useAutoScroll(justOpened && !!loadedCfg && (loadedCfg.auto_scroll ?? true))
 
   if (data === 'loading') {
     return (
@@ -164,6 +167,7 @@ export default function InvitePage({
 
   function handleOpen() {
     setOpened(true)
+    setJustOpened(true)
     try {
       sessionStorage.setItem(`invite.opened.${event.id}`, '1')
     } catch {}
@@ -181,7 +185,7 @@ export default function InvitePage({
       )}
       <div className={!opened ? 'h-[100svh] overflow-hidden' : undefined}>
         <InviteParticles />
-        {cfg?.music && <InviteAudio ref={audioRef} src={cfg.music} />}
+        {cfg?.music && <InviteAudio ref={audioRef} src={cfg.music} revealed={opened} />}
         <InviteHero
           coupleNames={event.couple_names}
           dateLine={formatDate(event.event_date)}
