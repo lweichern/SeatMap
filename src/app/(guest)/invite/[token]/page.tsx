@@ -4,16 +4,21 @@ import { use, useEffect, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { getRepo } from '@/lib/repo'
 import { peekToken, verifyToken } from '@/lib/token'
-import { monogram, formatDate } from '@/lib/invite'
+import { monogram, formatDate, DEFAULT_LETTER } from '@/lib/invite'
 import { Flourish } from '@/components/guest/Flourish'
 import { Hall2D, type HallViewProps } from '@/components/guest/Hall2D'
 import { InviteEnvelope } from '@/components/invite/InviteEnvelope'
 import { InviteParticles } from '@/components/invite/InviteParticles'
 import { InviteHero } from '@/components/invite/InviteHero'
+import { InviteEditorial } from '@/components/invite/InviteEditorial'
+import { InviteNames } from '@/components/invite/InviteNames'
+import { InviteRedDuo } from '@/components/invite/InviteRedDuo'
+import { InviteCalendar } from '@/components/invite/InviteCalendar'
 import { InviteCountdown } from '@/components/invite/InviteCountdown'
 import { InviteDetails } from '@/components/invite/InviteDetails'
 import { InviteBallroom } from '@/components/invite/InviteBallroom'
 import { InviteMenu } from '@/components/invite/InviteMenu'
+import { InviteLetter } from '@/components/invite/InviteLetter'
 import { InviteRsvp } from '@/components/invite/InviteRsvp'
 import type { HallSceneProps } from '@/lib/scene-builder'
 import type { Venue, VenueTable, WeddingEvent } from '@/lib/types'
@@ -120,6 +125,10 @@ export default function InvitePage({
   }
 
   const { event, venue, tables, greetName, prefill } = data
+  // Absent/null until the Invite Studio has been used for this event — an
+  // event with no config keeps the V1 page exactly as it always rendered;
+  // every new prop/section below is gated on `cfg`.
+  const cfg = event.invite ?? null
 
   const sceneProps: HallSceneProps = {
     walls: venue.walls,
@@ -166,12 +175,32 @@ export default function InvitePage({
           coupleNames={event.couple_names}
           dateLine={formatDate(event.event_date)}
           greetName={greetName}
+          photo={cfg?.photos?.hero}
         />
+        {cfg && <InviteEditorial photo={cfg.photos?.editorial} />}
+        {cfg && (
+          <InviteNames
+            bride={cfg.bride_name}
+            groom={cfg.groom_name}
+            bridePhoto={cfg.photos?.bride}
+            groomPhoto={cfg.photos?.groom}
+          />
+        )}
+        {cfg && (cfg.red_accent ?? true) && (
+          <InviteRedDuo bridePhoto={cfg.photos?.bride} groomPhoto={cfg.photos?.groom} />
+        )}
+        {cfg && <InviteCalendar eventDate={event.event_date} backdrop={cfg.photos?.candid1} />}
         <InviteCountdown eventDate={event.event_date} />
-        <InviteDetails event={event} venue={venue} />
+        <InviteDetails event={event} venue={venue} startsAt={cfg ? event.starts_at : undefined} />
         <InviteBallroom scene={sceneProps} fallback={<Hall2D {...hallProps} />} />
         <InviteMenu menu={event.menu ?? []} />
-        <InviteRsvp event={event} prefill={prefill} />
+        {cfg && (
+          <InviteLetter
+            lines={cfg.letter ?? DEFAULT_LETTER}
+            photos={{ candid1: cfg.photos?.candid1, candid2: cfg.photos?.candid2 }}
+          />
+        )}
+        <InviteRsvp event={event} prefill={prefill} deadline={cfg?.rsvp_deadline} />
         <footer className="py-16 text-center">
           <p className="gv-caps text-[11px] text-(--ink-faint)">SEATMAP</p>
         </footer>

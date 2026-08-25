@@ -6,6 +6,7 @@ import { mergeRsvp } from '@/lib/rsvp'
 import { burstConfetti } from '@/lib/confetti'
 import { DietarySteppers } from '@/components/DietarySteppers'
 import { Flourish } from '@/components/guest/Flourish'
+import { formatDate } from '@/lib/invite'
 import type { Dietary, GuestSide, WeddingEvent } from '@/lib/types'
 
 /**
@@ -18,14 +19,18 @@ import type { Dietary, GuestSide, WeddingEvent } from '@/lib/types'
  * (3) the accepted done state gets an extra line about this link's future
  * life as a seat-finder; (4) the header is a plain "Kindly respond" eyebrow
  * — the hero above has already introduced the couple and the date/venue,
- * so this section doesn't repeat them.
+ * so this section doesn't repeat them. An optional `deadline` (the
+ * studio's RSVP-by date) renders as a display-only line under the eyebrow
+ * — there's no hard cutoff enforced in V2.
  */
 export function InviteRsvp({
   event,
   prefill,
+  deadline,
 }: {
   event: WeddingEvent
   prefill: { name?: string; phone?: string } | null
+  deadline?: string
 }) {
   const [form, setForm] = useState({
     name: prefill?.name ?? '',
@@ -99,6 +104,14 @@ export function InviteRsvp({
   return (
     <section className="mx-auto max-w-md px-6 py-16">
       <p className="gv-caps gv-rise text-center text-[11px] text-(--gold)">Kindly respond</p>
+      {deadline && (
+        <p
+          className="gv-caps gv-rise mt-2 text-center text-[11px] text-(--ink-faint)"
+          style={{ animationDelay: '.04s' }}
+        >
+          RSVP <span className="text-(--gold)">/</span> by {formatDate(deadline)}
+        </p>
+      )}
 
       <div className="gv-rise mt-8 space-y-4" style={{ animationDelay: '.08s' }}>
         <label className={label}>
