@@ -157,3 +157,28 @@ personalization, hard RSVP cutoff enforcement.
   events row — worsens the listEvents payload backlog item; local-mode
   localStorage quota may reject saves with music (surfaced by the studio's
   save error alert). Storage-bucket follow-up unchanged.
+
+## Addendum 2 (2026-08-25): Templates
+
+- `InviteConfig.template?: 'classic' | 'editorial' | 'polaroid'` (default
+  'classic' — the existing ivory/gold design, unchanged) and
+  `InviteConfig.gallery?: string[]` (≤6 extra photos, data URLs).
+- Templates work as CSS-variable overrides on the guest shell
+  (`gv-t-editorial`, `gv-t-polaroid`) — every shared beat (envelope,
+  countdown, details, RSVP, letter, disc) restyles automatically — plus
+  template-specific hero/photo beats:
+  - **Midnight Editorial**: espresso-black paper, champagne ink, masthead
+    eyebrow ("THE WEDDING OF"), stacked uppercase serif names over the
+    full-bleed hero with a dark gradient scrim; hard-edged 50/50
+    bride+groom split with small-caps captions; horizontal snap-scroll
+    gallery strip with 01/02… numbering (uses `gallery`).
+  - **Sunday Scrapbook**: blush paper, rose accent; hero as a large tilted
+    polaroid with CSS tape strips and a script caption; bride/groom as two
+    leaning polaroids ('her'/'him'); scattered rotated polaroid collage
+    from `gallery`.
+- Studio gains a template picker (three style cards with live palette
+  swatches + a per-template line stating exactly which photos it uses) and
+  a Gallery uploader strip (add up to 6, ✕ each). cleanConfig keeps
+  template when not 'classic' and non-empty gallery only.
+- No migration (jsonb). Classic remains byte-identical for existing
+  configs (absent template ⇒ classic).

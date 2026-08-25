@@ -136,6 +136,10 @@ export interface InviteConfig {
   bride_name?: string
   groom_name?: string
   rsvp_deadline?: string
+  /** Visual template for the guest invite. Default 'classic'. */
+  template?: 'classic' | 'editorial' | 'polaroid'
+  /** Up to 6 extra photos used by templates with galleries. */
+  gallery?: string[]
   /** Audio data URL or https URL; loops after the envelope tap. */
   music?: string
   /** Gentle self-scroll after opening until the guest touches. Default true. */
