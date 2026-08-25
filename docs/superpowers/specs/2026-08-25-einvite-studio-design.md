@@ -180,5 +180,8 @@ personalization, hard RSVP cutoff enforcement.
   swatches + a per-template line stating exactly which photos it uses) and
   a Gallery uploader strip (add up to 6, ✕ each). cleanConfig keeps
   template when not 'classic' and non-empty gallery only.
-- No migration (jsonb). Classic remains byte-identical for existing
-  configs (absent template ⇒ classic).
+- No migration (jsonb). Classic keeps its structure and behavior exactly;
+  its gold accents were deliberately rationalized onto the shared palette
+  variables (buttons/seal/envelope now use --gold/--gold-deep/--gold-soft
+  instead of six one-off hexes) so templates can recolor them — visually
+  equivalent, verified by screenshot, and MORE internally consistent.

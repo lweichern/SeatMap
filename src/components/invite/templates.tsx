@@ -1,5 +1,6 @@
 'use client'
 
+import { splitCouple } from '@/lib/invite'
 import { useReveal } from './useReveal'
 
 /**
@@ -22,9 +23,10 @@ export function EdHero({
   greetName: string | null
   photo?: string
 }) {
-  // Names stacked like a masthead: "ADAM" / "&" / "EVE"
-  const parts = coupleNames.split(/\s*(?:&|and|与)\s*/i).filter(Boolean)
-  const stacked = parts.length === 2 ? [parts[0], '&', parts[1]] : [coupleNames]
+  // Names stacked like a masthead: "ADAM" / "&" / "EVE" — splitCouple
+  // handles the connector safely (never matches "and" inside "Amanda")
+  const { bride, groom } = splitCouple(coupleNames)
+  const stacked = bride && groom ? [bride, '&', groom] : [coupleNames]
   return (
     <div className="relative flex h-[100svh] w-full items-end overflow-hidden">
       {photo && (

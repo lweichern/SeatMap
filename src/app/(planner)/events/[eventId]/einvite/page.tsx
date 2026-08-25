@@ -33,7 +33,7 @@ function cleanConfig(cfg: InviteConfig): InviteConfig {
     letter: letter.length > 0 ? letter : undefined,
     red_accent: cfg.red_accent,
     template: cfg.template && cfg.template !== 'classic' ? cfg.template : undefined,
-    gallery: (cfg.gallery ?? []).filter(Boolean).length > 0 ? (cfg.gallery ?? []).filter(Boolean) : undefined,
+    gallery: (cfg.gallery ?? []).filter(Boolean).length > 0 ? (cfg.gallery ?? []).filter(Boolean).slice(0, 6) : undefined,
     music: cfg.music || undefined,
     auto_scroll: cfg.auto_scroll, // explicit false must survive
     photos: photoEntries.length > 0 ? Object.fromEntries(photoEntries) : undefined,
