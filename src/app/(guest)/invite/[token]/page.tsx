@@ -225,13 +225,13 @@ export default function InvitePage({
         {cfg && <InviteCalendar eventDate={event.event_date} backdrop={cfg.photos?.candid1} />}
         <InviteCountdown eventDate={event.event_date} />
         <InviteDetails event={event} venue={venue} startsAt={cfg ? event.starts_at : undefined} />
-        <InviteRsvp event={event} prefill={prefill} deadline={cfg?.rsvp_deadline} />
         {cfg && (
           <InviteLetter
             lines={cfg.letter ?? DEFAULT_LETTER}
             photos={{ candid1: cfg.photos?.candid1, candid2: cfg.photos?.candid2 }}
           />
         )}
+        <InviteRsvp event={event} prefill={prefill} deadline={cfg?.rsvp_deadline} />
         <footer className="py-16 text-center">
           <p className="gv-caps text-[11px] text-(--ink-faint)">SEATMAP</p>
         </footer>
