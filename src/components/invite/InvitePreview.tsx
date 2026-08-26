@@ -59,13 +59,26 @@ export function InvitePreview({
     return () => ro.disconnect()
   }, [])
 
-  // Ambient auto-scroll: the story plays itself at reading pace, pauses
-  // while the pointer hovers the frame, and loops (bottom → hold → top).
-  const hoverRef = useRef(false)
+  // Auto-scroll tour: plays on load, STOPS for good the moment the planner
+  // hovers or scrolls the frame (no sneaky resume on pointer-leave), and a
+  // ▶ button restarts it from the current position. Loops bottom → top.
+  const [touring, setTouring] = useState(true)
+  const tourRef = useRef(true)
+  // pressing ▶ unmounts the button and exposes the frame under the cursor,
+  // which fires a synthetic pointerenter — grace-ignore stops briefly
+  const ignoreStopUntil = useRef(0)
+  const setTour = (on: boolean) => {
+    tourRef.current = on
+    setTouring(on)
+    if (on) ignoreStopUntil.current = performance.now() + 600
+  }
   useEffect(() => {
     const el = frameRef.current
     if (!el) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setTour(false)
+      return
+    }
     let raf = 0
     let last = 0
     let holdUntil = 0
@@ -74,7 +87,7 @@ export function InvitePreview({
       if (last === 0) last = t
       const dt = (t - last) / 1000
       last = t
-      if (!hoverRef.current && t >= holdUntil) {
+      if (tourRef.current && t >= holdUntil) {
         const max = el.scrollHeight - el.clientHeight
         if (max > 4 && el.scrollTop >= max - 2) {
           holdUntil = t + 1800
@@ -86,17 +99,18 @@ export function InvitePreview({
       raf = requestAnimationFrame(step)
     }
     raf = requestAnimationFrame(step)
-    const over = () => (hoverRef.current = true)
-    const out = () => (hoverRef.current = false)
-    el.addEventListener('pointerenter', over)
-    el.addEventListener('pointerleave', out)
-    el.addEventListener('wheel', over, { passive: true })
+    const stop = () => {
+      if (performance.now() < ignoreStopUntil.current) return
+      setTour(false)
+    }
+    el.addEventListener('pointerenter', stop)
+    el.addEventListener('wheel', stop, { passive: true })
     return () => {
       cancelAnimationFrame(raf)
-      el.removeEventListener('pointerenter', over)
-      el.removeEventListener('pointerleave', out)
-      el.removeEventListener('wheel', over)
+      el.removeEventListener('pointerenter', stop)
+      el.removeEventListener('wheel', stop)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Music (when the config carries a track): tap-to-play over the frame.
@@ -145,6 +159,14 @@ export function InvitePreview({
               <span className={playing ? 'gv-spin inline-block' : 'inline-block opacity-60'}>♪</span>
             </button>
           </>
+        )}
+        {!touring && (
+          <button
+            onClick={() => setTour(true)}
+            className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 rounded-full border border-white/30 bg-black/55 px-4 py-1.5 text-xs font-medium text-white backdrop-blur-sm"
+          >
+            ▶ Auto-play tour
+          </button>
         )}
         <div
           ref={frameRef}
