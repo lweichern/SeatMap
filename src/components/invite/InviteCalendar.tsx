@@ -52,7 +52,7 @@ export function InviteCalendar({
                 <div key={di} className="flex h-8 items-center justify-center">
                   {d !== null &&
                     (d === grid.day ? (
-                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-(--gold) text-[13px] font-semibold text-(--card)">
+                      <span className="gv-daypulse flex h-7 w-7 items-center justify-center rounded-full bg-(--gold) text-[13px] font-semibold text-(--card)">
                         {d}
                       </span>
                     ) : (
