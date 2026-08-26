@@ -219,14 +219,16 @@ export default function InvitePage({
         {cfg && template === 'classic' && (
           <>
             <InviteEditorial photo={cfg.photos?.editorial} />
-            <InviteNames
-              bride={cfg.bride_name}
-              groom={cfg.groom_name}
-              bridePhoto={redShowsPortraits ? undefined : cfg.photos?.bride}
-              groomPhoto={redShowsPortraits ? undefined : cfg.photos?.groom}
-            />
+            {!redShowsPortraits && (
+              <InviteNames
+                bride={cfg.bride_name}
+                groom={cfg.groom_name}
+                bridePhoto={cfg.photos?.bride}
+                groomPhoto={cfg.photos?.groom}
+              />
+            )}
             {(cfg.red_accent ?? true) && (
-              <InviteRedDuo bridePhoto={cfg.photos?.bride} groomPhoto={cfg.photos?.groom} />
+              <InviteRedDuo bride={cfg.bride_name} groom={cfg.groom_name} bridePhoto={cfg.photos?.bride} groomPhoto={cfg.photos?.groom} />
             )}
           </>
         )}
