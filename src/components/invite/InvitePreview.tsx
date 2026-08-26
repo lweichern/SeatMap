@@ -41,6 +41,11 @@ export function InvitePreview({
 }) {
   const template = config.template ?? 'classic'
   const gallery = (config.gallery ?? []).filter(Boolean)
+  const redShowsPortraits =
+    template === 'classic' &&
+    (config.red_accent ?? true) &&
+    !!config.photos?.bride &&
+    !!config.photos?.groom
   const tplClass =
     template === 'editorial' ? 'gv-t-editorial' : template === 'polaroid' ? 'gv-t-polaroid' : ''
   const previewEvent: WeddingEvent = { ...event, invite: config }
@@ -225,8 +230,8 @@ export function InvitePreview({
                   <InviteNames
                     bride={config.bride_name}
                     groom={config.groom_name}
-                    bridePhoto={config.photos?.bride}
-                    groomPhoto={config.photos?.groom}
+                    bridePhoto={redShowsPortraits ? undefined : config.photos?.bride}
+                    groomPhoto={redShowsPortraits ? undefined : config.photos?.groom}
                   />
                   {(config.red_accent ?? true) && (
                     <InviteRedDuo
