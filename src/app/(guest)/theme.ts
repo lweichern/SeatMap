@@ -96,11 +96,12 @@ export const GUEST_THEME = `
 .gv-snap > *{ scroll-snap-align:center; }
 .gv-spin{ animation:gvSpin 3.5s linear infinite; }
 @keyframes gvSpin{ to{ transform:rotate(360deg) } }
-.gv-daypulse{ animation:gvDayPulse 1.9s ease-out infinite; }
+.gv-daypulse{ animation:gvDayPulse 1.3s ease-out infinite; }
 @keyframes gvDayPulse{
-  0%{ box-shadow:0 0 0 0 color-mix(in srgb, var(--gold) 45%, transparent); }
-  70%{ box-shadow:0 0 0 9px transparent; }
-  100%{ box-shadow:0 0 0 0 transparent; }
+  0%{ box-shadow:0 0 0 0 color-mix(in srgb, var(--gold) 75%, transparent); transform:scale(1); }
+  35%{ transform:scale(1.18); }
+  70%{ box-shadow:0 0 0 16px transparent; transform:scale(1); }
+  100%{ box-shadow:0 0 0 0 transparent; transform:scale(1); }
 }
 @media (prefers-reduced-motion: reduce){
   .gv-daypulse{ animation:none; }
