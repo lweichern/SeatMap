@@ -136,6 +136,14 @@ export default function InvitePage({
   const cfg = event.invite ?? null
   const template = cfg?.template ?? 'classic'
   const gallery = (cfg?.gallery ?? []).filter(Boolean)
+  // The red her/him beat and the names collage share the only portrait
+  // pair — when the red beat will show them, the collage goes labels-only.
+  const redShowsPortraits =
+    template === 'classic' &&
+    !!cfg &&
+    (cfg.red_accent ?? true) &&
+    !!cfg.photos?.bride &&
+    !!cfg.photos?.groom
 
 
   function handleOpen() {
@@ -214,8 +222,8 @@ export default function InvitePage({
             <InviteNames
               bride={cfg.bride_name}
               groom={cfg.groom_name}
-              bridePhoto={cfg.photos?.bride}
-              groomPhoto={cfg.photos?.groom}
+              bridePhoto={redShowsPortraits ? undefined : cfg.photos?.bride}
+              groomPhoto={redShowsPortraits ? undefined : cfg.photos?.groom}
             />
             {(cfg.red_accent ?? true) && (
               <InviteRedDuo bridePhoto={cfg.photos?.bride} groomPhoto={cfg.photos?.groom} />
