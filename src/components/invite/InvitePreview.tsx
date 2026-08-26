@@ -227,14 +227,18 @@ export function InvitePreview({
               {template === 'classic' && (
                 <>
                   <InviteEditorial photo={config.photos?.editorial} />
-                  <InviteNames
-                    bride={config.bride_name}
-                    groom={config.groom_name}
-                    bridePhoto={redShowsPortraits ? undefined : config.photos?.bride}
-                    groomPhoto={redShowsPortraits ? undefined : config.photos?.groom}
-                  />
+                  {!redShowsPortraits && (
+                    <InviteNames
+                      bride={config.bride_name}
+                      groom={config.groom_name}
+                      bridePhoto={config.photos?.bride}
+                      groomPhoto={config.photos?.groom}
+                    />
+                  )}
                   {(config.red_accent ?? true) && (
                     <InviteRedDuo
+                      bride={config.bride_name}
+                      groom={config.groom_name}
                       bridePhoto={config.photos?.bride}
                       groomPhoto={config.photos?.groom}
                     />
