@@ -505,6 +505,13 @@ export default function EinvitePage({
           {formatDate(event.event_date)} · {venue?.name ?? '—'} — date & venue come from
           the event
         </p>
+        {new Date(`${event.event_date}T23:59:59`) < new Date() && (
+          <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            This event&apos;s date is in the past, so the countdown section won&apos;t
+            appear on the invite. Update the event date from the Events page to bring
+            it back.
+          </p>
+        )}
 
         <div className="flex items-center gap-3 pt-1">
           <button
