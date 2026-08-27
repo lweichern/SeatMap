@@ -20,9 +20,7 @@ export default function EventsPage() {
   });
   const [loaded, setLoaded] = useState(false);
   const [menuFor, setMenuFor] = useState<string | null>(null);
-  const [dateEdit, setDateEdit] = useState<{ id: string; value: string } | null>(
-    null,
-  );
+  const [editing, setEditing] = useState<WeddingEvent | null>(null);
 
   const refresh = useCallback(async () => {
     const repo = getRepo();
@@ -68,13 +66,10 @@ export default function EventsPage() {
   const venueName = (id: string) =>
     venues.find((v) => v.id === id)?.name ?? "—";
 
-  async function saveDate(e: WeddingEvent) {
-    if (!dateEdit || dateEdit.id !== e.id) return;
-    const value = dateEdit.value;
-    setDateEdit(null);
-    if (!value || value === e.event_date) return;
-    // spread the freshly listed row so nothing else on the event is lost
-    await getRepo().saveEvent({ ...e, event_date: value });
+  async function saveEdit(draft: WeddingEvent) {
+    setEditing(null);
+    // draft is a spread of the freshly listed row, so nothing else is lost
+    await getRepo().saveEvent(draft);
     refresh();
   }
 
@@ -154,37 +149,22 @@ export default function EventsPage() {
           >
             <div>
               <h2 className="font-semibold text-slate-900">{e.couple_names}</h2>
-              <p className="flex items-center gap-1 text-xs text-slate-400">
-                {dateEdit?.id === e.id ? (
-                  <input
-                    type="date"
-                    autoFocus
-                    value={dateEdit.value}
-                    onChange={(ev) =>
-                      setDateEdit({ id: e.id, value: ev.target.value })
-                    }
-                    onBlur={() => saveDate(e)}
-                    onKeyDown={(ev) => {
-                      if (ev.key === "Enter") ev.currentTarget.blur();
-                      if (ev.key === "Escape") setDateEdit(null);
-                    }}
-                    className="rounded border border-slate-300 px-1 py-0.5 text-xs text-slate-700"
-                  />
-                ) : (
-                  <button
-                    onClick={() =>
-                      setDateEdit({ id: e.id, value: e.event_date })
-                    }
-                    title="Change date"
-                    className="rounded px-0.5 underline decoration-dotted underline-offset-2 hover:bg-slate-100 hover:text-slate-600"
-                  >
-                    {e.event_date} ✎
-                  </button>
-                )}
-                <span>· {venueName(e.venue_id)}</span>
+              <p className="text-xs text-slate-400">
+                {e.event_date}
+                {(m => (m ? `, ${m[1]}` : ""))(
+                  e.starts_at?.match(/T(\d{2}:\d{2})/),
+                )}{" "}
+                · {venueName(e.venue_id)}
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => setEditing(e)}
+                aria-label={`Edit ${e.couple_names}`}
+                className="rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50"
+              >
+                Edit
+              </button>
               <button
                 onClick={() => router.push(`/events/${e.id}/guests`)}
                 className="rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50"
@@ -245,6 +225,110 @@ export default function EventsPage() {
             </div>
           </div>
         ))}
+      </div>
+
+      {editing && (
+        <EditEventModal
+          event={editing}
+          venueName={venueName(editing.venue_id)}
+          onCancel={() => setEditing(null)}
+          onSave={saveEdit}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Popup editor for the per-event fields that are safe to change after
+ * creation. Venue and layout stay fixed — seating allocations live on the
+ * layout, so moving an event would orphan them.
+ */
+function EditEventModal({
+  event,
+  venueName,
+  onCancel,
+  onSave,
+}: {
+  event: WeddingEvent;
+  venueName: string;
+  onCancel: () => void;
+  onSave: (draft: WeddingEvent) => void;
+}) {
+  const [couple, setCouple] = useState(event.couple_names);
+  const [date, setDate] = useState(event.event_date);
+  // starts_at is stored as "YYYY-MM-DDTHH:MM:SS" — edit just the "HH:MM"
+  // and recompose against the (possibly changed) date on save.
+  const [startsAt, setStartsAt] = useState(
+    event.starts_at?.match(/T(\d{2}:\d{2})/)?.[1] ?? "",
+  );
+  const valid = couple.trim().length > 0 && date.length > 0;
+
+  return (
+    <div
+      className="fixed inset-0 z-30 flex items-center justify-center bg-slate-900/40 p-4"
+      onClick={onCancel}
+    >
+      <div
+        role="dialog"
+        aria-label="Edit event"
+        onClick={(ev) => ev.stopPropagation()}
+        className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl"
+      >
+        <h2 className="font-semibold text-slate-900">Edit event</h2>
+        <p className="mt-0.5 text-xs text-slate-400">
+          Venue stays {venueName} — seating is built on its layout.
+        </p>
+        <label className="mt-4 block text-xs font-medium text-slate-600">
+          Couple
+          <input
+            value={couple}
+            onChange={(ev) => setCouple(ev.target.value)}
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-normal"
+          />
+        </label>
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <label className="block text-xs font-medium text-slate-600">
+            Date
+            <input
+              type="date"
+              value={date}
+              onChange={(ev) => setDate(ev.target.value)}
+              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-normal"
+            />
+          </label>
+          <label className="block text-xs font-medium text-slate-600">
+            Starts at
+            <input
+              type="time"
+              value={startsAt}
+              onChange={(ev) => setStartsAt(ev.target.value)}
+              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-normal"
+            />
+          </label>
+        </div>
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            onClick={onCancel}
+            className="rounded-md border border-slate-200 px-4 py-2 text-sm hover:bg-slate-50"
+          >
+            Cancel
+          </button>
+          <button
+            disabled={!valid}
+            onClick={() =>
+              onSave({
+                ...event,
+                couple_names: couple.trim(),
+                event_date: date,
+                starts_at: startsAt ? `${date}T${startsAt}:00` : null,
+              })
+            }
+            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-40"
+          >
+            Save
+          </button>
+        </div>
       </div>
     </div>
   );
