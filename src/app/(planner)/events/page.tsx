@@ -20,6 +20,9 @@ export default function EventsPage() {
   });
   const [loaded, setLoaded] = useState(false);
   const [menuFor, setMenuFor] = useState<string | null>(null);
+  const [dateEdit, setDateEdit] = useState<{ id: string; value: string } | null>(
+    null,
+  );
 
   const refresh = useCallback(async () => {
     const repo = getRepo();
@@ -64,6 +67,16 @@ export default function EventsPage() {
 
   const venueName = (id: string) =>
     venues.find((v) => v.id === id)?.name ?? "—";
+
+  async function saveDate(e: WeddingEvent) {
+    if (!dateEdit || dateEdit.id !== e.id) return;
+    const value = dateEdit.value;
+    setDateEdit(null);
+    if (!value || value === e.event_date) return;
+    // spread the freshly listed row so nothing else on the event is lost
+    await getRepo().saveEvent({ ...e, event_date: value });
+    refresh();
+  }
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-8">
@@ -141,8 +154,34 @@ export default function EventsPage() {
           >
             <div>
               <h2 className="font-semibold text-slate-900">{e.couple_names}</h2>
-              <p className="text-xs text-slate-400">
-                {e.event_date} · {venueName(e.venue_id)}
+              <p className="flex items-center gap-1 text-xs text-slate-400">
+                {dateEdit?.id === e.id ? (
+                  <input
+                    type="date"
+                    autoFocus
+                    value={dateEdit.value}
+                    onChange={(ev) =>
+                      setDateEdit({ id: e.id, value: ev.target.value })
+                    }
+                    onBlur={() => saveDate(e)}
+                    onKeyDown={(ev) => {
+                      if (ev.key === "Enter") ev.currentTarget.blur();
+                      if (ev.key === "Escape") setDateEdit(null);
+                    }}
+                    className="rounded border border-slate-300 px-1 py-0.5 text-xs text-slate-700"
+                  />
+                ) : (
+                  <button
+                    onClick={() =>
+                      setDateEdit({ id: e.id, value: e.event_date })
+                    }
+                    title="Change date"
+                    className="rounded px-0.5 underline decoration-dotted underline-offset-2 hover:bg-slate-100 hover:text-slate-600"
+                  >
+                    {e.event_date} ✎
+                  </button>
+                )}
+                <span>· {venueName(e.venue_id)}</span>
               </p>
             </div>
             <div className="flex items-center gap-2">
