@@ -84,12 +84,11 @@ export default function InvitePage({
         // Reduced motion: initialize already-opened so an animating
         // envelope never mounts. Otherwise honor a prior open this session
         // so back-navigation doesn't re-seal it.
+        // Everyone gets the envelope on EVERY visit — each open is the
+        // full performance (tap → music → tour). Reduced motion still
+        // starts open so an animating envelope never mounts.
         const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-        let already = false
-        try {
-          already = sessionStorage.getItem(`invite.opened.${e.id}`) === '1'
-        } catch {}
-        setOpened(reduced || already)
+        setOpened(reduced)
       } catch {
         setData(null)
       }
@@ -149,9 +148,6 @@ export default function InvitePage({
   function handleOpen() {
     setOpened(true)
     setJustOpened(true)
-    try {
-      sessionStorage.setItem(`invite.opened.${event.id}`, '1')
-    } catch {}
   }
 
   return (
